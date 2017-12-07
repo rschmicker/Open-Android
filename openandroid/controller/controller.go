@@ -1,13 +1,15 @@
 package controller
 
-import(
-	"path/filepath"
-	"strings"
+import (
+	"bytes"
+	"github.com/Open-Android/openandroid/metadata"
+	"github.com/Open-Android/openandroid/utils"
 	"log"
 	"os"
-	"bytes"
 	"os/exec"
-	"github.com/Open-Android/openandroid/utils"
+	"path/filepath"
+	"strings"
+	"sync"
 )
 
 func Run(ApkDir string, DecodedDir string, OutputDir string) {
@@ -18,7 +20,7 @@ func Run(ApkDir string, DecodedDir string, OutputDir string) {
 	decode(paths, DecodedDir)
 }
 
-func getApkPaths(ApkDir string) ([]string) {
+func getApkPaths(ApkDir string) []string {
 	fileList := make([]string, 0)
 	err := filepath.Walk(ApkDir, func(path string, f os.FileInfo, err error) error {
 		if strings.Contains(path, ".apk") {
@@ -26,17 +28,35 @@ func getApkPaths(ApkDir string) ([]string) {
 		}
 		return err
 	})
-    utils.Check(err)
-    return fileList
+	utils.Check(err)
+	return fileList
 }
 
 func decode(ApkPaths []string, DecodedDir string) {
+	var wg sync.WaitGroup
 	for _, ApkPath := range ApkPaths {
-		cmd := exec.Command("apktool", "d", "--quiet", "-o", DecodedDir, ApkPath)
-		var out bytes.Buffer
-		cmd.Stdout = &out
-		err := cmd.Run()
-		log.Printf(out.String())
-		utils.Check(err)
+		wg.Add(1)
+		go func(ApkPath string, DecodedDir string) {
+			defer wg.Done()
+			sha256Hash := metadata.Sha256File(ApkPath)
+			apktoolPath, err := filepath.Abs("./apktool.sh")
+			utils.Check(err)
+			apkDecodedDir := DecodedDir + "/" + sha256Hash
+			if _, err := os.Stat(apkDecodedDir); os.IsNotExist(err) {
+				os.Mkdir(apkDecodedDir, os.FileMode(0700))
+			}
+			args := []string{"d", "--quiet", "-f", "-o", apkDecodedDir, ApkPath}
+			cmd := exec.Command(apktoolPath, args...)
+			var out bytes.Buffer
+			var errout bytes.Buffer
+			cmd.Stdout = &out
+			cmd.Stderr = &errout
+			err = cmd.Run()
+			utils.Check(err)
+			if errout.String() != "" {
+				log.Printf(errout.String())
+			}
+		}(ApkPath, DecodedDir)
 	}
+	wg.Wait()
 }

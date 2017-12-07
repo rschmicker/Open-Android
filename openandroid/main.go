@@ -1,14 +1,15 @@
 package main
 
 import (
-	"fmt"
 	"flag"
-	"os"
-	"log"
-	"io/ioutil"
-	yaml "gopkg.in/yaml.v2"
-	"github.com/Open-Android/openandroid/utils"
+	"fmt"
 	"github.com/Open-Android/openandroid/controller"
+	"github.com/Open-Android/openandroid/utils"
+	yaml "gopkg.in/yaml.v2"
+	"io/ioutil"
+	"log"
+	"os"
+	"path/filepath"
 )
 
 func main() {
@@ -25,11 +26,18 @@ func main() {
 	err = yaml.Unmarshal(data, &config)
 	utils.Check(err)
 
-	log.Printf("apkDir: " + config.ApkDir)
-	log.Printf("decodedDir: " + config.DecodedDir)
-	log.Printf("outputDir: " + config.OutputDir)
+	apkDir, err := filepath.Abs(config.ApkDir)
+	utils.Check(err)
+	decodedDir, err := filepath.Abs(config.DecodedDir)
+	utils.Check(err)
+	outputDir, err := filepath.Abs(config.OutputDir)
+	utils.Check(err)
 
-	controller.Run(config.ApkDir, config.DecodedDir, config.OutputDir)
+	log.Printf("apkDir: " + apkDir)
+	log.Printf("decodedDir: " + decodedDir)
+	log.Printf("outputDir: " + outputDir)
+
+	controller.Run(apkDir, decodedDir, outputDir)
 }
 
 func printUsage() {
