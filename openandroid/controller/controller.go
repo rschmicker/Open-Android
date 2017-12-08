@@ -13,17 +13,18 @@ import (
 )
 
 func Run(ApkDir string, DecodedDir string, OutputDir string) {
-	paths := getApkPaths(ApkDir)
+	paths := getPaths(ApkDir, ".apk")
 	if len(paths) == 0 {
 		log.Fatal("No APKs found")
 	}
-	decode(paths, DecodedDir)
+	pathMap := decode(paths, DecodedDir)
+	extract(pathMap)
 }
 
-func getApkPaths(ApkDir string) []string {
+func getPaths(ApkDir string, Containing string) []string {
 	fileList := make([]string, 0)
 	err := filepath.Walk(ApkDir, func(path string, f os.FileInfo, err error) error {
-		if strings.Contains(path, ".apk") {
+		if strings.Contains(path, Containing) {
 			fileList = append(fileList, path)
 		}
 		return err
@@ -32,8 +33,22 @@ func getApkPaths(ApkDir string) []string {
 	return fileList
 }
 
-func decode(ApkPaths []string, DecodedDir string) {
+func extract(pathMap map[string]string) {
 	var wg sync.WaitGroup
+	for apkPath, decodedPath := range pathMap {
+		wg.Add(1)
+		go func(apkPath string, decodedPath string) {
+			defer wg.Done()
+			ApkData := &utils.ApkData{}
+			ApkData.Md5 = metadata.Md5File(apkPath)
+		}(apkPath, decodedPath)
+	}
+	wg.Wait()
+}
+
+func decode(ApkPaths []string, DecodedDir string) (map[string]string) {
+	var wg sync.WaitGroup
+	pathMap := make(map[string]string)
 	for _, ApkPath := range ApkPaths {
 		wg.Add(1)
 		go func(ApkPath string, DecodedDir string) {
@@ -56,7 +71,9 @@ func decode(ApkPaths []string, DecodedDir string) {
 			if errout.String() != "" {
 				log.Printf(errout.String())
 			}
+			pathMap[ApkPath] = apkDecodedDir
 		}(ApkPath, DecodedDir)
 	}
 	wg.Wait()
+	return pathMap
 }
