@@ -2,8 +2,10 @@ package controller
 
 import (
 	"bytes"
+	"encoding/json"
 	"github.com/Open-Android/openandroid/metadata"
 	"github.com/Open-Android/openandroid/utils"
+	"io/ioutil"
 	"log"
 	"os"
 	"os/exec"
@@ -12,13 +14,25 @@ import (
 	"sync"
 )
 
+type ApkData struct {
+	Strings     []string
+	Apis        []string
+	Permissions []string
+	Md5         string
+	Sha256      string
+	Sha1        string
+	PackageName string
+	Version     string
+	Intents     string
+}
+
 func Run(ApkDir string, DecodedDir string, OutputDir string) {
 	paths := getPaths(ApkDir, ".apk")
 	if len(paths) == 0 {
 		log.Fatal("No APKs found")
 	}
 	pathMap := decode(paths, DecodedDir)
-	extract(pathMap)
+	extract(pathMap, OutputDir)
 }
 
 func getPaths(ApkDir string, Containing string) []string {
@@ -33,20 +47,38 @@ func getPaths(ApkDir string, Containing string) []string {
 	return fileList
 }
 
-func extract(pathMap map[string]string) {
+func extract(pathMap map[string]string, OutputDir string) {
 	var wg sync.WaitGroup
 	for apkPath, decodedPath := range pathMap {
 		wg.Add(1)
-		go func(apkPath string, decodedPath string) {
+		go func(apkPath string, decodedPath string, outputDir string) {
 			defer wg.Done()
-			ApkData := &utils.ApkData{}
-			ApkData.Md5 = metadata.Md5File(apkPath)
-		}(apkPath, decodedPath)
+			ApkData := &ApkData{}
+			ApkData.GetMetaData(apkPath, decodedPath)
+			ApkData.WriteJSON(outputDir)
+		}(apkPath, decodedPath, OutputDir)
 	}
 	wg.Wait()
 }
 
-func decode(ApkPaths []string, DecodedDir string) (map[string]string) {
+func (apk *ApkData) WriteJSON(OutputDir string) {
+	data, err := json.Marshal(apk)
+	utils.Check(err)
+	outputFile := OutputDir + "/" + apk.Sha256 + ".json"
+	err = ioutil.WriteFile(outputFile, data, 0644)
+	utils.Check(err)
+}
+
+func (apk *ApkData) GetMetaData(apkPath string, decodedPath string) {
+	apk.Md5 = metadata.Md5File(apkPath)
+	apk.Sha1 = metadata.Sha1File(apkPath)
+	apk.Sha256 = metadata.Sha256File(apkPath)
+	apk.Version = metadata.GetVersion(decodedPath)
+	apk.PackageName = metadata.GetPackageName(decodedPath)
+	apk.Permissions = metadata.GetPermissions(decodedPath)
+}
+
+func decode(ApkPaths []string, DecodedDir string) map[string]string {
 	var wg sync.WaitGroup
 	pathMap := make(map[string]string)
 	for _, ApkPath := range ApkPaths {
