@@ -24,6 +24,7 @@ type ApkData struct {
 	PackageName string
 	Version     string
 	Intents     string
+	Malicious   bool
 }
 
 func Run(ApkDir string, DecodedDir string, OutputDir string) {
@@ -49,7 +50,10 @@ func getPaths(ApkDir string, Containing string) []string {
 
 func extract(pathMap map[string]string, OutputDir string) {
 	var wg sync.WaitGroup
+	sem := make(chan struct{}, 12)
 	for apkPath, decodedPath := range pathMap {
+		sem <- struct{}{}
+		defer func() { <-sem }()
 		wg.Add(1)
 		go func(apkPath string, decodedPath string, outputDir string) {
 			defer wg.Done()
@@ -59,6 +63,7 @@ func extract(pathMap map[string]string, OutputDir string) {
 		}(apkPath, decodedPath, OutputDir)
 	}
 	wg.Wait()
+	close(sem)
 }
 
 func (apk *ApkData) WriteJSON(OutputDir string) {
@@ -81,7 +86,10 @@ func (apk *ApkData) GetMetaData(apkPath string, decodedPath string) {
 func decode(ApkPaths []string, DecodedDir string) map[string]string {
 	var wg sync.WaitGroup
 	pathMap := make(map[string]string)
+	sem := make(chan struct{}, 12)
 	for _, ApkPath := range ApkPaths {
+		sem <- struct{}{}
+		defer func() { <-sem }()
 		wg.Add(1)
 		go func(ApkPath string, DecodedDir string) {
 			defer wg.Done()
@@ -107,5 +115,6 @@ func decode(ApkPaths []string, DecodedDir string) map[string]string {
 		}(ApkPath, DecodedDir)
 	}
 	wg.Wait()
+	close(sem)
 	return pathMap
 }
