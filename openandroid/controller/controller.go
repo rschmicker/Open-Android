@@ -52,14 +52,15 @@ func extract(pathMap map[string]string, OutputDir string) {
 	var wg sync.WaitGroup
 	sem := make(chan struct{}, 12)
 	for apkPath, decodedPath := range pathMap {
-		sem <- struct{}{}
-		defer func() { <-sem }()
 		wg.Add(1)
 		go func(apkPath string, decodedPath string, outputDir string) {
+			sem <- struct{}{}
+			defer func() { <-sem }()
 			defer wg.Done()
 			ApkData := &ApkData{}
 			ApkData.GetMetaData(apkPath, decodedPath)
 			ApkData.WriteJSON(outputDir)
+			log.Printf("Extracted: " + metadata.GetApkName(decodedPath))
 		}(apkPath, decodedPath, OutputDir)
 	}
 	wg.Wait()
@@ -88,10 +89,10 @@ func decode(ApkPaths []string, DecodedDir string) map[string]string {
 	pathMap := make(map[string]string)
 	sem := make(chan struct{}, 12)
 	for _, ApkPath := range ApkPaths {
-		sem <- struct{}{}
-		defer func() { <-sem }()
 		wg.Add(1)
 		go func(ApkPath string, DecodedDir string) {
+			sem <- struct{}{}
+			defer func() { <-sem }()
 			defer wg.Done()
 			sha256Hash := metadata.Sha256File(ApkPath)
 			apktoolPath, err := filepath.Abs("./apktool.sh")
