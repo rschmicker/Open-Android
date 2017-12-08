@@ -7,6 +7,7 @@ import (
 	"encoding/xml"
 	"fmt"
 	"github.com/Open-Android/openandroid/utils"
+	yaml "gopkg.in/yaml.v2"
 	"io"
 	"io/ioutil"
 	"os"
@@ -14,7 +15,7 @@ import (
 )
 
 type ApkToolConfig struct {
-	VersionInfo interface{} `yaml:"versionInfo"`
+	Name string `yaml:"apkFileName"`
 }
 
 type Package struct {
@@ -85,6 +86,16 @@ func GetVersion(decodedPath string) string {
 	stringData = strings.Split(stringData, "versionName: ")[1]
 	stringData = strings.Trim(stringData, "\n")
 	return strings.Trim(stringData, " ")
+}
+
+func GetApkName(decodedPath string) string {
+	apkToolOutputPath := decodedPath + "/apktool.yml"
+	data, err := ioutil.ReadFile(apkToolOutputPath)
+	utils.Check(err)
+	config := ApkToolConfig{}
+	err = yaml.Unmarshal(data, &config)
+	utils.Check(err)
+	return config.Name
 }
 
 func GetPermissions(decodedPath string) []string {

@@ -112,6 +112,7 @@ func decode(ApkPaths []string, DecodedDir string) map[string]string {
 				log.Printf(errout.String())
 			}
 			pathMap[ApkPath] = apkDecodedDir
+			log.Printf("Decoded: " + metadata.GetApkName(apkDecodedDir))
 		}(ApkPath, DecodedDir)
 	}
 	wg.Wait()
