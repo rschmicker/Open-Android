@@ -108,7 +108,10 @@ func decode(ApkPaths []string, DecodedDir string) map[string]string {
 			cmd.Stdout = &out
 			cmd.Stderr = &errout
 			err = cmd.Run()
-			utils.Check(err)
+			if err != nil {
+				log.Printf("Error decoding: " + metadata.GetApkName(apkDecodedDir))
+				return
+			}
 			if errout.String() != "" {
 				log.Printf(errout.String())
 			}
