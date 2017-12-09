@@ -55,6 +55,7 @@ func extract(pathMap map[string]string, OutputDir string, CodeDir string) {
 	var wg sync.WaitGroup
 	sem := make(chan struct{}, 12)
 	var mutex = &sync.Mutex{}
+	count := 0
 	for apkPath, decodedPath := range pathMap {
 		wg.Add(1)
 		go func(apkPath string, decodedPath string, outputDir string, codePath string) {
@@ -79,7 +80,11 @@ func extract(pathMap map[string]string, OutputDir string, CodeDir string) {
 			}
 			mutex.Unlock()
 			ApkData.WriteJSON(outputDir)
-			log.Printf("Extracted: " + metadata.GetApkName(decodedPath))
+			mutex.Lock()
+			count++
+			mutex.Unlock()
+			percent := (float64(count) / float64(len(pathMap))) * float64(100)
+			log.Printf("(%.2f%%) Extracted: "+metadata.GetApkName(decodedPath), percent)
 		}(apkPath, decodedPath, OutputDir, CodeDir)
 	}
 	wg.Wait()
@@ -115,6 +120,8 @@ func decode(ApkPaths []string, DecodedDir string) map[string]string {
 	var wg sync.WaitGroup
 	pathMap := make(map[string]string)
 	sem := make(chan struct{}, 12)
+	count := 0
+	var mutex = &sync.Mutex{}
 	for _, ApkPath := range ApkPaths {
 		wg.Add(1)
 		go func(ApkPath string, DecodedDir string) {
@@ -143,7 +150,11 @@ func decode(ApkPaths []string, DecodedDir string) map[string]string {
 				log.Printf(errout.String())
 			}
 			pathMap[ApkPath] = apkDecodedDir
-			log.Printf("Decoded: " + metadata.GetApkName(apkDecodedDir))
+			mutex.Lock()
+			count++
+			mutex.Unlock()
+			percent := (float64(count) / float64(len(ApkPaths))) * float64(100)
+			log.Printf("(%.2f%%) Decoded: "+metadata.GetApkName(apkDecodedDir), percent)
 		}(ApkPath, DecodedDir)
 	}
 	wg.Wait()
