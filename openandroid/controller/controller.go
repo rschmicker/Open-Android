@@ -3,7 +3,10 @@ package controller
 import (
 	"bytes"
 	"encoding/json"
+	"github.com/Open-Android/openandroid/apis"
+	"github.com/Open-Android/openandroid/intent"
 	"github.com/Open-Android/openandroid/metadata"
+	"github.com/Open-Android/openandroid/stringApk"
 	"github.com/Open-Android/openandroid/utils"
 	"io/ioutil"
 	"log"
@@ -23,17 +26,17 @@ type ApkData struct {
 	Sha1        string
 	PackageName string
 	Version     string
-	Intents     string
+	Intents     []string
 	Malicious   bool
 }
 
-func Run(ApkDir string, DecodedDir string, OutputDir string) {
+func Runner(ApkDir string, DecodedDir string, OutputDir string, CodeDir string) {
 	paths := getPaths(ApkDir, ".apk")
 	if len(paths) == 0 {
 		log.Fatal("No APKs found")
 	}
 	pathMap := decode(paths, DecodedDir)
-	extract(pathMap, OutputDir)
+	extract(pathMap, OutputDir, CodeDir)
 }
 
 func getPaths(ApkDir string, Containing string) []string {
@@ -48,23 +51,47 @@ func getPaths(ApkDir string, Containing string) []string {
 	return fileList
 }
 
-func extract(pathMap map[string]string, OutputDir string) {
+func extract(pathMap map[string]string, OutputDir string, CodeDir string) {
 	var wg sync.WaitGroup
 	sem := make(chan struct{}, 12)
+	var mutex = &sync.Mutex{}
 	for apkPath, decodedPath := range pathMap {
 		wg.Add(1)
-		go func(apkPath string, decodedPath string, outputDir string) {
+		go func(apkPath string, decodedPath string, outputDir string, codePath string) {
+			var err error
 			sem <- struct{}{}
 			defer func() { <-sem }()
 			defer wg.Done()
 			ApkData := &ApkData{}
 			ApkData.GetMetaData(apkPath, decodedPath)
+			ApkData.IsMalicious(apkPath)
+			ApkData.Intents = intent.GetIntents(decodedPath)
+			mutex.Lock()
+			ApkData.Apis, err = apis.GetApis(apkPath, codePath)
+			if err != nil {
+				log.Printf("Error extracting apis: " + apkPath)
+				return
+			}
+			ApkData.Strings, err = stringApk.GetStrings(apkPath, codePath)
+			if err != nil {
+				log.Printf("Error extracting strings: " + apkPath)
+				return
+			}
+			mutex.Unlock()
 			ApkData.WriteJSON(outputDir)
 			log.Printf("Extracted: " + metadata.GetApkName(decodedPath))
-		}(apkPath, decodedPath, OutputDir)
+		}(apkPath, decodedPath, OutputDir, CodeDir)
 	}
 	wg.Wait()
 	close(sem)
+}
+
+func (apk *ApkData) IsMalicious(apkPath string) {
+	if strings.Contains(apkPath, "malware") {
+		apk.Malicious = true
+	} else {
+		apk.Malicious = false
+	}
 }
 
 func (apk *ApkData) WriteJSON(OutputDir string) {

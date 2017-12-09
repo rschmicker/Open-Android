@@ -5,11 +5,8 @@ import (
 	"fmt"
 	"github.com/Open-Android/openandroid/controller"
 	"github.com/Open-Android/openandroid/utils"
-	yaml "gopkg.in/yaml.v2"
-	"io/ioutil"
 	"log"
 	"os"
-	"path/filepath"
 )
 
 func main() {
@@ -20,24 +17,15 @@ func main() {
 		printUsage()
 		os.Exit(1)
 	}
-	data, err := ioutil.ReadFile(*configFlag)
-	utils.Check(err)
-	config := utils.ConfigData{}
-	err = yaml.Unmarshal(data, &config)
-	utils.Check(err)
 
-	apkDir, err := filepath.Abs(config.ApkDir)
-	utils.Check(err)
-	decodedDir, err := filepath.Abs(config.DecodedDir)
-	utils.Check(err)
-	outputDir, err := filepath.Abs(config.OutputDir)
-	utils.Check(err)
+	config := utils.ReadConfig(*configFlag)
 
-	log.Printf("apkDir: " + apkDir)
-	log.Printf("decodedDir: " + decodedDir)
-	log.Printf("outputDir: " + outputDir)
+	log.Printf("apkDir: " + config.ApkDir)
+	log.Printf("decodedDir: " + config.DecodedDir)
+	log.Printf("outputDir: " + config.OutputDir)
+	log.Printf("codeDir: " + config.CodeDir)
 
-	controller.Run(apkDir, decodedDir, outputDir)
+	controller.Runner(config.ApkDir, config.DecodedDir, config.OutputDir, config.CodeDir)
 }
 
 func printUsage() {
