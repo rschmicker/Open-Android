@@ -134,10 +134,6 @@ func decode(ApkPaths []string, DecodedDir string) map[string]string {
 			apkDecodedDir := DecodedDir + "/" + sha256Hash
 			if _, err := os.Stat(apkDecodedDir); os.IsNotExist(err) {
 				os.Mkdir(apkDecodedDir, os.FileMode(0700))
-			} else {
-				pathMap[ApkPath] = apkDecodedDir
-				log.Printf("Already decoded: " + metadata.GetApkName(apkDecodedDir))
-				return
 			}
 			args := []string{"d", "--quiet", "-f", "-o", apkDecodedDir, ApkPath}
 			cmd := exec.Command(apktoolPath, args...)
