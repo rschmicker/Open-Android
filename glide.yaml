@@ -1,3 +1,4 @@
 package: openandroid
 import:
 - package: gopkg.in/yaml.v2
+- package: gopkg.in/check.v1
