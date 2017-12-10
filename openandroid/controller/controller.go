@@ -67,11 +67,13 @@ func extract(path string, config utils.ConfigData) {
 	apkd.Apis, err = apis.GetApis(path, config.CodeDir)
 	if err != nil {
 		log.Printf("Error extracting apis: " + path)
+		javaMutex.Unlock()
 		return
 	}
 	apkd.Strings, err = stringApk.GetStrings(path, config.CodeDir)
 	if err != nil {
 		log.Printf("Error extracting strings: " + path)
+		javaMutex.Unlock()
 		return
 	}
 	javaMutex.Unlock()
