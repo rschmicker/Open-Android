@@ -17,13 +17,13 @@ import (
 
 var javaMutex = &sync.Mutex{}
 var countMutex = &sync.Mutex{}
+var wg sync.WaitGroup
 
 func Runner(config utils.ConfigData) {
 	paths := getPaths(config.ApkDir, ".apk")
 	if len(paths) == 0 {
 		log.Fatal("No APKs found")
 	}
-	var wg sync.WaitGroup
 	sem := make(chan struct{}, runtime.NumCPU()/2*100)
 	count := 0
 	for _, apk := range paths {
