@@ -45,7 +45,7 @@ func Runner(config utils.ConfigData) {
 			if avgTime == 0 {
 				avgTime = duration
 			} else {
-				avgTime = (avgTime * duration) / 2
+				avgTime = (avgTime + duration) / 2
 			}
 			countMutex.Unlock()
 			percent := (float64(count) / float64(len(paths))) * float64(100)
