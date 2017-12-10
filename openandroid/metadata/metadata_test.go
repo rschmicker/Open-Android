@@ -47,7 +47,7 @@ func (s *MetaDataTestSuite) TestGetPackageName(c *C) {
 	configPath, err := filepath.Abs("../../openandroid.yaml")
 	c.Assert(err, IsNil)
 	config := utils.ReadConfig(configPath)
-	testLoc := config.DecodedDir + "/8fc218d35790b7c363b7423f9bd6faa71b2adcc59e55444431eced0cf0e60a4d"
+	testLoc := config.ApkDir + "/Facebook Lite_v70.0.0.9.116_apkpure.com.apk"
 	name := GetPackageName(testLoc)
 	testName := "com.facebook.lite"
 	c.Check(name, Equals, testName)
@@ -57,7 +57,7 @@ func (s *MetaDataTestSuite) TestGetVersion(c *C) {
 	configPath, err := filepath.Abs("../../openandroid.yaml")
 	c.Assert(err, IsNil)
 	config := utils.ReadConfig(configPath)
-	testLoc := config.DecodedDir + "/8fc218d35790b7c363b7423f9bd6faa71b2adcc59e55444431eced0cf0e60a4d"
+	testLoc := config.ApkDir + "/Facebook Lite_v70.0.0.9.116_apkpure.com.apk"
 	version := GetVersion(testLoc)
 	testVersion := "70.0.0.9.116"
 	c.Check(version, Equals, testVersion)
@@ -67,7 +67,7 @@ func (s *MetaDataTestSuite) TestGetApkName(c *C) {
 	configPath, err := filepath.Abs("../../openandroid.yaml")
 	c.Assert(err, IsNil)
 	config := utils.ReadConfig(configPath)
-	testLoc := config.DecodedDir + "/8fc218d35790b7c363b7423f9bd6faa71b2adcc59e55444431eced0cf0e60a4d"
+	testLoc := config.ApkDir + "/Facebook Lite_v70.0.0.9.116_apkpure.com.apk"
 	name := GetApkName(testLoc)
 	testName := "Facebook Lite_v70.0.0.9.116_apkpure.com.apk"
 	c.Check(name, Equals, testName)
@@ -77,7 +77,7 @@ func (s *MetaDataTestSuite) TestGetPermissions(c *C) {
 	configPath, err := filepath.Abs("../../openandroid.yaml")
 	c.Assert(err, IsNil)
 	config := utils.ReadConfig(configPath)
-	testLoc := config.DecodedDir + "/8fc218d35790b7c363b7423f9bd6faa71b2adcc59e55444431eced0cf0e60a4d"
+	testLoc := config.ApkDir + "/Facebook Lite_v70.0.0.9.116_apkpure.com.apk"
 	permissions := GetPermissions(testLoc)
 	c.Check(len(permissions), Equals, 45)
 }

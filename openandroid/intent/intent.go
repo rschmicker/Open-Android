@@ -1,27 +1,39 @@
 package intent
 
 import (
-	"bufio"
-	"github.com/Open-Android/openandroid/utils"
-	"os"
+	"bytes"
+	"log"
+	"os/exec"
 	"strings"
 )
 
-func GetIntents(decodedPath string) []string {
-	ret := []string{}
-	file, err := os.Open(decodedPath + "/AndroidManifest.xml")
-	utils.Check(err)
-	defer file.Close()
-
-	scanner := bufio.NewScanner(file)
-	for scanner.Scan() {
-		line := scanner.Text()
-		if strings.Contains(line, ".intent.") {
-			lines := strings.Split(line, "\"")
-			ret = append(ret, lines[1])
+func GetIntents(path string) []string {
+	prog := "aapt"
+	args := []string{
+		"dump",
+		"xmltree",
+		path,
+		"AndroidManifest.xml"}
+	cmd := exec.Command(prog, args...)
+	var out bytes.Buffer
+	var errout bytes.Buffer
+	cmd.Stdout = &out
+	cmd.Stderr = &errout
+	err := cmd.Run()
+	if err != nil {
+		return []string{}
+	}
+	if errout.String() != "" {
+		log.Printf(errout.String())
+	}
+	data := strings.Split(out.String(), "\n")
+	intents := []string{}
+	for _, line := range data {
+		if strings.Contains(line, "android.intent.") {
+			line = strings.Split(line, "(Raw: \"")[1]
+			line = strings.Split(line, "\")")[0]
+			intents = append(intents, line)
 		}
 	}
-	err = scanner.Err()
-	utils.Check(err)
-	return ret
+	return intents
 }

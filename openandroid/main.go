@@ -21,11 +21,10 @@ func main() {
 	config := utils.ReadConfig(*configFlag)
 
 	log.Printf("apkDir: " + config.ApkDir)
-	log.Printf("decodedDir: " + config.DecodedDir)
 	log.Printf("outputDir: " + config.OutputDir)
 	log.Printf("codeDir: " + config.CodeDir)
 
-	controller.Runner(config.ApkDir, config.DecodedDir, config.OutputDir, config.CodeDir)
+	controller.Runner(config)
 }
 
 func printUsage() {

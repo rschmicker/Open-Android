@@ -8,10 +8,9 @@ import (
 )
 
 type ConfigData struct {
-	ApkDir     string `yaml:"apkDir"`
-	DecodedDir string `yaml:"decodedDir"`
-	OutputDir  string `yaml:"outputDir"`
-	CodeDir    string `yaml:"codeDir"`
+	ApkDir    string `yaml:"apkDir"`
+	OutputDir string `yaml:"outputDir"`
+	CodeDir   string `yaml:"codeDir"`
 }
 
 func ReadConfig(configPath string) ConfigData {
@@ -23,9 +22,9 @@ func ReadConfig(configPath string) ConfigData {
 
 	config.ApkDir, err = filepath.Abs(config.ApkDir)
 	Check(err)
-	config.DecodedDir, err = filepath.Abs(config.DecodedDir)
-	Check(err)
 	config.OutputDir, err = filepath.Abs(config.OutputDir)
+	Check(err)
+	config.CodeDir, err = filepath.Abs(config.CodeDir)
 	Check(err)
 
 	return config

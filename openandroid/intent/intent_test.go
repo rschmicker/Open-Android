@@ -17,7 +17,7 @@ func (s *IntentTestSuite) TestGetIntents(c *C) {
 	configPath, err := filepath.Abs("../../openandroid.yaml")
 	c.Assert(err, IsNil)
 	config := utils.ReadConfig(configPath)
-	testLoc := config.DecodedDir + "/8fc218d35790b7c363b7423f9bd6faa71b2adcc59e55444431eced0cf0e60a4d"
+	testLoc := config.ApkDir + "/Facebook Lite_v70.0.0.9.116_apkpure.com.apk"
 	intents := GetIntents(testLoc)
-	c.Check(67, Equals, len(intents))
+	c.Check(60, Equals, len(intents))
 }

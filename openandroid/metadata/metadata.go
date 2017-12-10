@@ -1,36 +1,18 @@
 package metadata
 
 import (
+	"bytes"
 	"crypto/md5"
 	"crypto/sha1"
 	"crypto/sha256"
-	"encoding/xml"
 	"fmt"
 	"github.com/Open-Android/openandroid/utils"
-	yaml "gopkg.in/yaml.v2"
 	"io"
-	"io/ioutil"
+	"log"
 	"os"
+	"os/exec"
 	"strings"
 )
-
-type ApkToolConfig struct {
-	Name string `yaml:"apkFileName"`
-}
-
-type Package struct {
-	PackageName string `xml:"package,attr"`
-}
-
-type AndroidManifest struct {
-	XMLName         xml.Name     `xml:"manifest"`
-	UsesPermissions []Permission `xml:"uses-permission"`
-	Permissions     []Permission `xml:"permission"`
-}
-
-type Permission struct {
-	Name string `xml:"name,attr"`
-}
 
 func Sha256File(fileName string) string {
 	f, err := os.Open(fileName)
@@ -68,49 +50,90 @@ func Sha1File(fileName string) string {
 	return fmt.Sprintf("%x", h.Sum(nil))
 }
 
-func GetPackageName(decodedPath string) string {
-	androidManifest := decodedPath + "/AndroidManifest.xml"
-	data, err := ioutil.ReadFile(androidManifest)
-	utils.Check(err)
-	packageName := Package{}
-	err = xml.Unmarshal(data, &packageName)
-	utils.Check(err)
-	return packageName.PackageName
-}
-
-func GetVersion(decodedPath string) string {
-	apkToolOutputPath := decodedPath + "/apktool.yml"
-	data, err := ioutil.ReadFile(apkToolOutputPath)
-	utils.Check(err)
-	stringData := string(data)
-	stringData = strings.Split(stringData, "versionName: ")[1]
-	stringData = strings.Trim(stringData, "\n")
-	return strings.Trim(stringData, " ")
-}
-
-func GetApkName(decodedPath string) string {
-	apkToolOutputPath := decodedPath + "/apktool.yml"
-	data, err := ioutil.ReadFile(apkToolOutputPath)
-	utils.Check(err)
-	config := ApkToolConfig{}
-	err = yaml.Unmarshal(data, &config)
-	utils.Check(err)
-	return config.Name
-}
-
-func GetPermissions(decodedPath string) []string {
-	androidManifest := decodedPath + "/AndroidManifest.xml"
-	data, err := ioutil.ReadFile(androidManifest)
-	utils.Check(err)
-	permissions := AndroidManifest{}
-	err = xml.Unmarshal(data, &permissions)
-	utils.Check(err)
-	ret := []string{}
-	for _, name := range permissions.UsesPermissions {
-		ret = append(ret, name.Name)
+func GetPackageName(path string) string {
+	prog := "aapt"
+	args := []string{
+		"dump",
+		"permissions",
+		path}
+	cmd := exec.Command(prog, args...)
+	var out bytes.Buffer
+	var errout bytes.Buffer
+	cmd.Stdout = &out
+	cmd.Stderr = &errout
+	err := cmd.Run()
+	if err != nil {
+		return ""
 	}
-	for _, name := range permissions.Permissions {
-		ret = append(ret, name.Name)
+	if errout.String() != "" {
+		log.Printf(errout.String())
 	}
-	return ret
+	data := strings.Split(out.String(), "\n")
+	return strings.Split(data[0], "package: ")[1]
+}
+
+func GetVersion(path string) string {
+	prog := "aapt"
+	args := []string{
+		"dump",
+		"badging",
+		path}
+	cmd := exec.Command(prog, args...)
+	var out bytes.Buffer
+	var errout bytes.Buffer
+	cmd.Stdout = &out
+	cmd.Stderr = &errout
+	err := cmd.Run()
+	if err != nil {
+		return ""
+	}
+	if errout.String() != "" {
+		log.Printf(errout.String())
+	}
+	data := strings.Split(out.String(), "\n")
+	version := data[0]
+	version = strings.Split(version, "versionName='")[1]
+	version = strings.Split(version, "'")[0]
+	return version
+}
+
+func GetApkName(path string) string {
+	name := strings.Split(path, "/")
+	return name[len(name)-1]
+}
+
+func GetPermissions(path string) []string {
+	prog := "aapt"
+	args := []string{
+		"dump",
+		"permissions",
+		path}
+	cmd := exec.Command(prog, args...)
+	var out bytes.Buffer
+	var errout bytes.Buffer
+	cmd.Stdout = &out
+	cmd.Stderr = &errout
+	err := cmd.Run()
+	if err != nil {
+		return []string{}
+	}
+	if errout.String() != "" {
+		log.Printf(errout.String())
+	}
+	tmp := strings.Split(out.String(), "\n")
+	tmp = tmp[1:]
+	data := []string{}
+	for _, line := range tmp {
+		if line == "" {
+			continue
+		}
+		line = strings.Trim(line, " ")
+		line = strings.Split(line, "permission: ")[1]
+		if strings.Contains(line, "name") {
+			line = strings.Split(line, "name='")[1]
+		}
+		line = strings.Trim(line, "'")
+		data = append(data, line)
+	}
+	return data
 }
