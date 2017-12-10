@@ -50,7 +50,7 @@ func Runner(config utils.ConfigData) {
 			countMutex.Unlock()
 			percent := (float64(count) / float64(len(paths))) * float64(100)
 			name := metadata.GetApkName(apk)
-			eta := (avgTime * etaCount) / etaCount
+			eta := (avgTime * etaCount) / float64(len(paths))
 			eta = eta / float64(3600)
 			log.Printf("(%.2f%%) Completed: "+name+" ETA(hours): %f", percent, eta)
 		}(apk)
