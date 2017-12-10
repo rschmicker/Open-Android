@@ -129,7 +129,7 @@ func GetPermissions(path string) []string {
 		}
 		line = strings.Trim(line, " ")
 		line = strings.Split(line, "permission: ")[1]
-		if strings.Contains(line, "name") {
+		if strings.Contains(line, "name='") {
 			line = strings.Split(line, "name='")[1]
 		}
 		line = strings.Trim(line, "'")

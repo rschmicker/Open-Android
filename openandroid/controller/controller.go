@@ -10,7 +10,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
-	"runtime"
+	//"runtime"
 	"strings"
 	"sync"
 )
@@ -24,7 +24,7 @@ func Runner(config utils.ConfigData) {
 		log.Fatal("No APKs found")
 	}
 	var wg sync.WaitGroup
-	sem := make(chan struct{}, runtime.NumCPU())
+	sem := make(chan struct{}, 600)
 	count := 0
 	for _, apk := range paths {
 		wg.Add(1)
