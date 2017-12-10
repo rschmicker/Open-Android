@@ -27,32 +27,19 @@ func Runner(config utils.ConfigData) {
 	var wg sync.WaitGroup
 	sem := make(chan struct{}, runtime.NumCPU()/2*100)
 	count := 0
-	var avgTime float64 = 0
-	etaCount := float64(len(paths))
 	for _, apk := range paths {
 		wg.Add(1)
 		go func(apk string) {
-			timeStart := time.Now().UnixNano()
 			sem <- struct{}{}
 			defer func() { <-sem }()
 			defer wg.Done()
 			extract(apk, config)
-			timeEnd := time.Now().UnixNano()
-			duration := float64(timeEnd-timeStart) / float64(1000000000)
 			countMutex.Lock()
 			count++
-			etaCount--
-			if avgTime == 0 {
-				avgTime = duration
-			} else {
-				avgTime = (avgTime + duration) / 2
-			}
 			countMutex.Unlock()
 			percent := (float64(count) / float64(len(paths))) * float64(100)
 			name := metadata.GetApkName(apk)
-			eta := (avgTime * etaCount)
-			eta = eta / float64(3600)
-			log.Printf("(%.2f%%) Completed: "+name+" ETA(hours): %f", percent, eta)
+			log.Printf("(%.2f%%) Completed: %s"+name, percent)
 		}(apk)
 	}
 	wg.Wait()
