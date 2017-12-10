@@ -124,7 +124,7 @@ func GetPermissions(path string) []string {
 	tmp = tmp[1:]
 	data := []string{}
 	for _, line := range tmp {
-		if line == "" {
+		if !strings.Contains(line, "permission: ") {
 			continue
 		}
 		line = strings.Trim(line, " ")
