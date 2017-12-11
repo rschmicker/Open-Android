@@ -14,7 +14,7 @@ var _ = Suite(&MetaDataTestSuite{})
 func Test(t *testing.T) { TestingT(t) }
 
 func (s *MetaDataTestSuite) TestSha256File(c *C) {
-	configPath, err := filepath.Abs("../../openandroid.yaml")
+	configPath, err := filepath.Abs("../../test.yaml")
 	c.Assert(err, IsNil)
 	config := utils.ReadConfig(configPath)
 	testLoc := config.ApkDir + "/Facebook Lite_v70.0.0.9.116_apkpure.com.apk"
@@ -24,7 +24,7 @@ func (s *MetaDataTestSuite) TestSha256File(c *C) {
 }
 
 func (s *MetaDataTestSuite) TestSha1File(c *C) {
-	configPath, err := filepath.Abs("../../openandroid.yaml")
+	configPath, err := filepath.Abs("../../test.yaml")
 	c.Assert(err, IsNil)
 	config := utils.ReadConfig(configPath)
 	testLoc := config.ApkDir + "/Facebook Lite_v70.0.0.9.116_apkpure.com.apk"
@@ -34,7 +34,7 @@ func (s *MetaDataTestSuite) TestSha1File(c *C) {
 }
 
 func (s *MetaDataTestSuite) TestMd5File(c *C) {
-	configPath, err := filepath.Abs("../../openandroid.yaml")
+	configPath, err := filepath.Abs("../../test.yaml")
 	c.Assert(err, IsNil)
 	config := utils.ReadConfig(configPath)
 	testLoc := config.ApkDir + "/Facebook Lite_v70.0.0.9.116_apkpure.com.apk"
@@ -44,7 +44,7 @@ func (s *MetaDataTestSuite) TestMd5File(c *C) {
 }
 
 func (s *MetaDataTestSuite) TestGetPackageName(c *C) {
-	configPath, err := filepath.Abs("../../openandroid.yaml")
+	configPath, err := filepath.Abs("../../test.yaml")
 	c.Assert(err, IsNil)
 	config := utils.ReadConfig(configPath)
 	testLoc := config.ApkDir + "/Facebook Lite_v70.0.0.9.116_apkpure.com.apk"
@@ -54,7 +54,7 @@ func (s *MetaDataTestSuite) TestGetPackageName(c *C) {
 }
 
 func (s *MetaDataTestSuite) TestGetVersion(c *C) {
-	configPath, err := filepath.Abs("../../openandroid.yaml")
+	configPath, err := filepath.Abs("../../test.yaml")
 	c.Assert(err, IsNil)
 	config := utils.ReadConfig(configPath)
 	testLoc := config.ApkDir + "/Facebook Lite_v70.0.0.9.116_apkpure.com.apk"
@@ -64,7 +64,7 @@ func (s *MetaDataTestSuite) TestGetVersion(c *C) {
 }
 
 func (s *MetaDataTestSuite) TestGetApkName(c *C) {
-	configPath, err := filepath.Abs("../../openandroid.yaml")
+	configPath, err := filepath.Abs("../../test.yaml")
 	c.Assert(err, IsNil)
 	config := utils.ReadConfig(configPath)
 	testLoc := config.ApkDir + "/Facebook Lite_v70.0.0.9.116_apkpure.com.apk"
@@ -74,7 +74,7 @@ func (s *MetaDataTestSuite) TestGetApkName(c *C) {
 }
 
 func (s *MetaDataTestSuite) TestGetPermissions(c *C) {
-	configPath, err := filepath.Abs("../../openandroid.yaml")
+	configPath, err := filepath.Abs("../../test.yaml")
 	c.Assert(err, IsNil)
 	config := utils.ReadConfig(configPath)
 	testLoc := config.ApkDir + "/Facebook Lite_v70.0.0.9.116_apkpure.com.apk"

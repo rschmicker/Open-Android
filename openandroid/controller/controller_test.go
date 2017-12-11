@@ -14,7 +14,7 @@ var _ = Suite(&ControllerTestSuite{})
 func Test(t *testing.T) { TestingT(t) }
 
 func (s *ControllerTestSuite) TestgetPaths(c *C) {
-	configPath, err := filepath.Abs("../../openandroid.yaml")
+	configPath, err := filepath.Abs("../../test.yaml")
 	c.Assert(err, IsNil)
 	config := utils.ReadConfig(configPath)
 	testLoc := config.ApkDir

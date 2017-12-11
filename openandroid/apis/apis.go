@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-func GetApis(ApkDir string, CodeDir string) ([]string, error) {
+func GetApis(ApkDir string, CodeDir string) []string {
 	prog := "java"
 	args := []string{"-Dfile.encoding=UTF-8",
 		"-cp",
@@ -21,7 +21,7 @@ func GetApis(ApkDir string, CodeDir string) ([]string, error) {
 	cmd.Stderr = &errout
 	err := cmd.Run()
 	if err != nil {
-		return []string{}, err
+		return []string{"ERROR: no DEX file is found in the APK file."}
 	}
 	if errout.String() != "" {
 		log.Printf(errout.String())
@@ -34,5 +34,5 @@ func GetApis(ApkDir string, CodeDir string) ([]string, error) {
 			data[i] = tmp[8:]
 		}
 	}
-	return data, nil
+	return data
 }

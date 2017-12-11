@@ -14,7 +14,7 @@ var _ = Suite(&IntentTestSuite{})
 func Test(t *testing.T) { TestingT(t) }
 
 func (s *IntentTestSuite) TestGetIntents(c *C) {
-	configPath, err := filepath.Abs("../../openandroid.yaml")
+	configPath, err := filepath.Abs("../../test.yaml")
 	c.Assert(err, IsNil)
 	config := utils.ReadConfig(configPath)
 	testLoc := config.ApkDir + "/Facebook Lite_v70.0.0.9.116_apkpure.com.apk"

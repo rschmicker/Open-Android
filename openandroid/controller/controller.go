@@ -58,24 +58,13 @@ func getPaths(ApkDir string, Containing string) []string {
 }
 
 func extract(path string, config utils.ConfigData) {
-	var err error
 	apkd := &ApkData{}
 	apkd.GetMetaData(path)
 	apkd.IsMalicious(path)
 	apkd.Intents = intent.GetIntents(path)
 	javaMutex.Lock()
-	apkd.Apis, err = apis.GetApis(path, config.CodeDir)
-	if err != nil {
-		log.Printf("Error extracting apis: " + path)
-		javaMutex.Unlock()
-		return
-	}
-	apkd.Strings, err = stringApk.GetStrings(path, config.CodeDir)
-	if err != nil {
-		log.Printf("Error extracting strings: " + path)
-		javaMutex.Unlock()
-		return
-	}
+	apkd.Apis = apis.GetApis(path, config.CodeDir)
+	apkd.Strings = stringApk.GetStrings(path, config.CodeDir)
 	javaMutex.Unlock()
 	apkd.WriteJSON(config.OutputDir)
 }

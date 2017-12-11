@@ -7,6 +7,7 @@ import (
 	"crypto/sha256"
 	"fmt"
 	"github.com/Open-Android/openandroid/utils"
+	"github.com/lunny/axmlParser"
 	"io"
 	"log"
 	"os"
@@ -51,50 +52,17 @@ func Sha1File(fileName string) string {
 }
 
 func GetPackageName(path string) string {
-	prog := "aapt"
-	args := []string{
-		"dump",
-		"permissions",
-		path}
-	cmd := exec.Command(prog, args...)
-	var out bytes.Buffer
-	var errout bytes.Buffer
-	cmd.Stdout = &out
-	cmd.Stderr = &errout
-	err := cmd.Run()
-	if err != nil {
-		return ""
-	}
-	if errout.String() != "" {
-		log.Printf(errout.String())
-	}
-	data := strings.Split(out.String(), "\n")
-	return strings.Split(data[0], "package: ")[1]
+	listener := new(axmlParser.AppNameListener)
+	_, err := axmlParser.ParseApk(path, listener)
+	utils.Check(err)
+	return listener.PackageName
 }
 
 func GetVersion(path string) string {
-	prog := "aapt"
-	args := []string{
-		"dump",
-		"badging",
-		path}
-	cmd := exec.Command(prog, args...)
-	var out bytes.Buffer
-	var errout bytes.Buffer
-	cmd.Stdout = &out
-	cmd.Stderr = &errout
-	err := cmd.Run()
-	if err != nil {
-		return ""
-	}
-	if errout.String() != "" {
-		log.Printf(errout.String())
-	}
-	data := strings.Split(out.String(), "\n")
-	version := data[0]
-	version = strings.Split(version, "versionName='")[1]
-	version = strings.Split(version, "'")[0]
-	return version
+	listener := new(axmlParser.AppNameListener)
+	_, err := axmlParser.ParseApk(path, listener)
+	utils.Check(err)
+	return listener.VersionName
 }
 
 func GetApkName(path string) string {
