@@ -11,6 +11,8 @@ type ConfigData struct {
 	ApkDir    string `yaml:"apkDir"`
 	OutputDir string `yaml:"outputDir"`
 	CodeDir   string `yaml:"codeDir"`
+	CacheDir  string `yaml:"cacheDir"`
+	CacheSize int    `yaml:"cacheSize"`
 }
 
 func ReadConfig(configPath string) ConfigData {
@@ -25,6 +27,8 @@ func ReadConfig(configPath string) ConfigData {
 	config.OutputDir, err = filepath.Abs(config.OutputDir)
 	Check(err)
 	config.CodeDir, err = filepath.Abs(config.CodeDir)
+	Check(err)
+	config.CacheDir, err = filepath.Abs(config.CacheDir)
 	Check(err)
 
 	return config
