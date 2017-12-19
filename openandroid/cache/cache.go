@@ -88,8 +88,8 @@ func (ct *CacheTable) Runner() {
 			CacheTableMutex.Unlock()
 			return
 		}
-		if initialSize != ct.Size {
-			difference := ct.Size - initialSize
+		if initialSize != len(ct.Table) {
+			difference := len(ct.Table) - initialSize
 			ct.Populate(ct.Location + difference)
 		}
 		CacheTableMutex.Unlock()
@@ -99,7 +99,7 @@ func (ct *CacheTable) Runner() {
 
 func (ct *CacheTable) Completed(path string) {
 	name := metadata.GetApkName(path)
-	for i := 0; i < ct.Size; i++ {
+	for i := 0; i < len(ct.Table); i++ {
 		if strings.Contains(ct.Table[i].FilePath, name) {
 			ct.Table[i].Completed = true
 		}
@@ -119,7 +119,7 @@ func (ct *CacheTable) GetFilePath() string {
 	if len(ct.Table) == 0 {
 		return path
 	}
-	for i := 0; i < ct.Size; i++ {
+	for i := 0; i < len(ct.Table); i++ {
 		if !ct.Table[i].InProcess {
 			path = ct.Table[i].FilePath
 			ct.Table[i].InProcess = true
