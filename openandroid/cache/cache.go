@@ -73,8 +73,8 @@ func (ct *CacheTable) Runner() {
 		if len(ct.Table) == 0 {
 			break
 		}
-		initialSize := ct.Size
-		for i := 0; i < ct.Size; i++ {
+		initialSize := len(ct.Table)
+		for i := 0; i < len(ct.Table); i++ {
 			file := ct.Table[i]
 			if file.Completed {
 				err := os.Remove(file.FilePath)
