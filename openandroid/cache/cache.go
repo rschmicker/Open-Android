@@ -20,7 +20,7 @@ type CacheTable struct {
 	Size             int
 	DirectoryToCache string
 	Files            []string
-	Location         int
+	//Location         int
 }
 
 type CacheObject struct {
@@ -43,7 +43,7 @@ func (ct *CacheTable) Initialize(config utils.ConfigData) int {
 	if ct.Size > len(ct.Files) {
 		ct.Size = len(ct.Files)
 	}
-	ct.Location = 0
+	//ct.Location = 0
 	length := len(ct.Files)
 	ct.Populate(ct.Size)
 	return length
@@ -51,10 +51,13 @@ func (ct *CacheTable) Initialize(config utils.ConfigData) int {
 
 func (ct *CacheTable) Populate(end int) {
 	CacheTableMutex.Lock()
+	if end > ct.Size {
+		end = ct.Size
+	}
 	if end > len(ct.Files) {
 		end = len(ct.Files)
 	}
-	for i := ct.Location; i < end; i++ {
+	for i := 0; i < end; i++ {
 		name := metadata.GetApkName(ct.Files[i])
 		err := copyFileContents(ct.Files[i], ct.RamDiskPath+name)
 		utils.Check(err)
@@ -62,8 +65,7 @@ func (ct *CacheTable) Populate(end int) {
 		ct.Table = append(ct.Table, co)
 		log.Println("Caching: " + name)
 	}
-	ct.Location = end
-	ct.Files = ct.Files[ct.Location:]
+	ct.Files = ct.Files[end:]
 	CacheTableMutex.Unlock()
 }
 
@@ -90,7 +92,7 @@ func (ct *CacheTable) Runner() {
 		}
 		if initialSize != len(ct.Table) {
 			difference := len(ct.Table) - initialSize
-			ct.Populate(ct.Location + difference)
+			ct.Populate(difference)
 		}
 		CacheTableMutex.Unlock()
 		//time.Sleep(5 * time.Second)
