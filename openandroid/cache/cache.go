@@ -43,16 +43,12 @@ func (ct *CacheTable) Initialize(config utils.ConfigData) int {
 	if ct.Size > len(ct.Files) {
 		ct.Size = len(ct.Files)
 	}
-	//ct.Location = 0
 	length := len(ct.Files)
 	ct.Populate(ct.Size)
 	return length
 }
 
 func (ct *CacheTable) Populate(end int) {
-	if len(ct.Table) == 0 {
-		return
-	}
 	CacheTableMutex.Lock()
 	if end > ct.Size {
 		end = ct.Size
@@ -85,7 +81,9 @@ func (ct *CacheTable) Runner() {
 				utils.Check(err)
 				ct.Table = append(ct.Table[:i], ct.Table[i+1:]...)
 				log.Println("Removed: " + metadata.GetApkName(file.FilePath) + " from cache")
+				CacheTableMutex.Unlock()
 				ct.Populate(1)
+				CacheTableMutex.Lock()
 			}
 		}
 		if len(ct.Table) == 0 && len(ct.Files) == 0 {
