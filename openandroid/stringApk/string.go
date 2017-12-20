@@ -11,7 +11,7 @@ func GetStrings(ApkDir string, CodeDir string) []string {
 	prog := "java"
 	args := []string{"-Dfile.encoding=UTF-8",
 		"-cp",
-		CodeDir + "/stringApk/:./apis/Rapid.jar",
+		CodeDir + "/stringApk/:" + CodeDir + "/apis/Rapid.jar",
 		"StringParser",
 		ApkDir}
 	cmd := exec.Command(prog, args...)

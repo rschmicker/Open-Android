@@ -11,7 +11,7 @@ func GetApis(ApkDir string, CodeDir string) []string {
 	prog := "java"
 	args := []string{"-Dfile.encoding=UTF-8",
 		"-cp",
-		CodeDir + "/apis/:./apis/Rapid.jar",
+		CodeDir + "/apis/:" + CodeDir + "/apis/Rapid.jar",
 		"APIParser",
 		ApkDir}
 	cmd := exec.Command(prog, args...)

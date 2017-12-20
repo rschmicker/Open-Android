@@ -23,7 +23,7 @@ func Runner(config utils.ConfigData) {
 	go cacheTable.Runner()
 	sem := make(chan struct{}, runtime.NumCPU())
 	count := 0
-	for {
+	for i := 0; i < length; i++ {
 		if cacheTable.IsEmpty() {
 			break
 		}

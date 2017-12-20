@@ -9,7 +9,7 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
-	//"time"
+	"syscall"
 )
 
 var CacheTableMutex = &sync.Mutex{}
@@ -17,10 +17,11 @@ var CacheTableMutex = &sync.Mutex{}
 type CacheTable struct {
 	Table            []CacheObject
 	RamDiskPath      string
-	Size             int
+	Length           int
+	Size             uint64
+	CurrentSize      uint64
 	DirectoryToCache string
 	Files            []string
-	//Location         int
 }
 
 type CacheObject struct {
@@ -34,71 +35,97 @@ func (ct *CacheTable) Initialize(config utils.ConfigData) int {
 	os.RemoveAll(ct.RamDiskPath)
 	err := os.Mkdir(ct.RamDiskPath, 0777)
 	utils.Check(err)
-	ct.Size = config.CacheSize
+	ct.Length = config.CacheSize
+	ct.CurrentSize = 0
 	ct.DirectoryToCache = config.ApkDir
 	ct.Files = getPaths(ct.DirectoryToCache, ".apk")
 	if len(ct.Files) == 0 {
-		log.Fatal("No APKs found")
+		log.Fatal("No Files found")
 	}
-	if ct.Size > len(ct.Files) {
-		ct.Size = len(ct.Files)
+	if ct.Length > len(ct.Files) {
+		ct.Length = len(ct.Files)
 	}
 	length := len(ct.Files)
-	ct.Populate(ct.Size)
+	ct.Size = ct.AvailableRamSpace() / 2
+	ct.Populate(ct.Length)
 	return length
 }
 
 func (ct *CacheTable) Populate(end int) {
 	CacheTableMutex.Lock()
-	if end > ct.Size {
-		end = ct.Size
+	defer CacheTableMutex.Unlock()
+	if end > ct.Length {
+		end = ct.Length
+	}
+	if end > (ct.Length - len(ct.Table)) {
+		end = ct.Length - len(ct.Table)
 	}
 	if end > len(ct.Files) {
 		end = len(ct.Files)
 	}
 	for i := 0; i < end; i++ {
+		if (ct.CurrentSize + GetFileSize(ct.Files[i])) > ct.Size {
+			end = i
+			break
+		}
 		name := metadata.GetApkName(ct.Files[i])
 		err := copyFileContents(ct.Files[i], ct.RamDiskPath+name)
 		utils.Check(err)
+		ct.CurrentSize += GetFileSize(ct.Files[i])
 		co := CacheObject{ct.RamDiskPath + name, false, false}
 		ct.Table = append(ct.Table, co)
 		log.Println("Caching: " + name)
+		log.Printf("Cache size(%v): %v/%v", len(ct.Table), ct.CurrentSize/1024/1024, ct.Size/1024/1024)
 	}
 	ct.Files = ct.Files[end:]
-	CacheTableMutex.Unlock()
+}
+
+func (ct *CacheTable) AvailableRamSpace() uint64 {
+	var stat syscall.Statfs_t
+	syscall.Statfs(ct.RamDiskPath, &stat)
+	return (stat.Bavail * uint64(stat.Bsize))
+}
+
+func GetFileSize(path string) uint64 {
+	fi, err := os.Stat(path)
+	utils.Check(err)
+	return uint64(fi.Size())
 }
 
 func (ct *CacheTable) Runner() {
 	for {
 		CacheTableMutex.Lock()
-		if len(ct.Table) == 0 {
+		if len(ct.Table) == 0 && len(ct.Files) == 0 {
+			CacheTableMutex.Unlock()
 			break
+		}
+		if len(ct.Table) == 0 && len(ct.Files) != 0 {
+			CacheTableMutex.Unlock()
+			ct.Populate(ct.Length)
+			continue
 		}
 		for i := 0; i < len(ct.Table); i++ {
 			file := ct.Table[i]
 			if file.Completed {
+				fileSize := GetFileSize(file.FilePath)
 				err := os.Remove(file.FilePath)
 				utils.Check(err)
-				ct.Table = append(ct.Table[:i], ct.Table[i+1:]...)
+				ct.Table[i] = ct.Table[len(ct.Table)-1]
+				ct.Table = ct.Table[:len(ct.Table)-1]
 				log.Println("Removed: " + metadata.GetApkName(file.FilePath) + " from cache")
-				CacheTableMutex.Unlock()
-				ct.Populate(1)
-				CacheTableMutex.Lock()
+				ct.CurrentSize -= fileSize
 			}
 		}
-		if len(ct.Table) == 0 && len(ct.Files) == 0 {
-			CacheTableMutex.Unlock()
-			return
-		}
 		CacheTableMutex.Unlock()
-		//time.Sleep(5 * time.Second)
+		ct.Populate(ct.Length)
 	}
 }
 
 func (ct *CacheTable) Completed(path string) {
 	name := metadata.GetApkName(path)
 	for i := 0; i < len(ct.Table); i++ {
-		if strings.Contains(ct.Table[i].FilePath, name) {
+		ramName := metadata.GetApkName(ct.Table[i].FilePath)
+		if ramName == name {
 			ct.Table[i].Completed = true
 		}
 	}
@@ -107,7 +134,7 @@ func (ct *CacheTable) Completed(path string) {
 func (ct *CacheTable) IsEmpty() bool {
 	CacheTableMutex.Lock()
 	defer CacheTableMutex.Unlock()
-	return !(len(ct.Table) > 0)
+	return (len(ct.Table) == 0 && len(ct.Files) == 0)
 }
 
 func (ct *CacheTable) GetFilePath() string {
@@ -124,7 +151,6 @@ func (ct *CacheTable) GetFilePath() string {
 			break
 		}
 	}
-
 	return path
 }
 

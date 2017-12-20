@@ -1,3 +1,5 @@
-apkDir: "/Users/rschmicker/src/github.com/Open-Android/testAPK/apk"
-decodedDir: "/Users/rschmicker/src/github.com/Open-Android/testAPK/decoded"
-outputDir: "/Users/rschmicker/src/github.com/Open-Android/testAPK/output"
+apkDir: "/home/rschmicker/src/github.com/Open-Android/data/apks"
+codeDir: "/home/rschmicker/src/github.com/Open-Android/openandroid"
+outputDir: "/home/rschmicker/src/github.com/Open-Android/testAPK/output"
+cacheDir: "/dev/shm"
+cacheSize: 24
