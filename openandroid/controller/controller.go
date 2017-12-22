@@ -31,12 +31,9 @@ func Runner(config utils.ConfigData) {
 		go func() {
 			sem <- struct{}{}
 			apk := cacheTable.GetFilePath()
+			defer cacheTable.Completed(apk)
 			defer func() { <-sem }()
 			defer wg.Done()
-			if apk == "" {
-				return
-			}
-			defer cacheTable.Completed(apk)
 			extract(apk, config)
 			countMutex.Lock()
 			count++

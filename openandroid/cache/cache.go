@@ -141,9 +141,6 @@ func (ct *CacheTable) GetFilePath() string {
 	path := ""
 	CacheTableMutex.Lock()
 	defer CacheTableMutex.Unlock()
-	if len(ct.Table) == 0 {
-		return path
-	}
 	for i := 0; i < len(ct.Table); i++ {
 		if !ct.Table[i].InProcess {
 			path = ct.Table[i].FilePath
