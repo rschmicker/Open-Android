@@ -157,14 +157,19 @@ func (ct *CacheTable) Close() {
 }
 
 func getPaths(dir string, Containing string) []string {
-	fileList := make([]string, 0)
+	fileList := []string{}
+	fileMap := make(map[string]string)
 	err := filepath.Walk(dir, func(path string, f os.FileInfo, err error) error {
 		if strings.Contains(path, Containing) {
-			fileList = append(fileList, path)
+			hash := metadata.Sha256File(path)
+			fileMap[hash] = path
 		}
 		return err
 	})
 	utils.Check(err)
+	for _, value := range fileMap {
+		fileList = append(fileList, value)
+	}
 	return fileList
 }
 
