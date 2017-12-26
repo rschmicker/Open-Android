@@ -35,35 +35,22 @@ func (ct *CacheTable) Initialize(config utils.ConfigData) int {
 	os.RemoveAll(ct.RamDiskPath)
 	err := os.Mkdir(ct.RamDiskPath, 0777)
 	utils.Check(err)
-	ct.Length = config.CacheSize
 	ct.CurrentSize = 0
 	ct.DirectoryToCache = config.ApkDir
 	ct.Files = GetPaths(ct.DirectoryToCache, ".apk")
 	if len(ct.Files) == 0 {
 		log.Fatal("No Files found")
 	}
-	if ct.Length > len(ct.Files) {
-		ct.Length = len(ct.Files)
-	}
-	length := len(ct.Files)
 	ct.Size = ct.AvailableRamSpace() / 2
-	ct.Populate(ct.Length)
-	return length
+	ct.Populate()
+	return len(ct.Files)
 }
 
-func (ct *CacheTable) Populate(end int) {
+func (ct *CacheTable) Populate() {
 	CacheTableMutex.Lock()
 	defer CacheTableMutex.Unlock()
-	if end > ct.Length {
-		end = ct.Length
-	}
-	if end > (ct.Length - len(ct.Table)) {
-		end = ct.Length - len(ct.Table)
-	}
-	if end > len(ct.Files) {
-		end = len(ct.Files)
-	}
-	for i := 0; i < end; i++ {
+	end := 0
+	for i := 0; i < len(ct.Files); i++ {
 		if (ct.CurrentSize + GetFileSize(ct.Files[i])) > ct.Size {
 			end = i
 			break
@@ -98,7 +85,7 @@ func (ct *CacheTable) Runner() {
 			break
 		}
 		if ct.IsNotEmpty() {
-			ct.Populate(ct.Length)
+			ct.Populate()
 			continue
 		}
 		ct.GarbageCollector()

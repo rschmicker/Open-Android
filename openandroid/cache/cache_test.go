@@ -30,6 +30,5 @@ func (s *CacheTestSuite) TestInitialize(c *C) {
 	length := ct.Initialize(config)
 	c.Check(length, Equals, 1)
 	c.Check(ct.RamDiskPath, Equals, "/dev/shm/cache/")
-	c.Check(ct.Length, Equals, 1)
 	c.Check(ct.DirectoryToCache, Equals, config.ApkDir)
 }
