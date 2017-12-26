@@ -6,13 +6,14 @@ import (
 	"github.com/Open-Android/openandroid/utils"
 	"log"
 	"os"
+	"runtime"
 	"strings"
 	"sync"
 )
 
 func CleanDirectory(config utils.ConfigData) {
 	var wg sync.WaitGroup
-	sem := make(chan struct{}, 1000)
+	sem := make(chan struct{}, runtime.NumCPU())
 	fileList := cache.GetPaths(config.ApkDir, ".apk")
 	for _, file := range fileList {
 		wg.Add(1)
