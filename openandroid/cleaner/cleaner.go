@@ -22,7 +22,7 @@ func CleanDirectory(config utils.ConfigData) {
 			}
 			if file == newPath {
 				log.Printf("Skipping: %v already cleaned", file)
-				continue
+				return
 			}
 			err := os.Rename(file, newPath)
 			utils.Check(err)
