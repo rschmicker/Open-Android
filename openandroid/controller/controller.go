@@ -4,6 +4,7 @@ import (
 	"github.com/Open-Android/openandroid/apis"
 	. "github.com/Open-Android/openandroid/apkdata"
 	"github.com/Open-Android/openandroid/cache"
+	"github.com/Open-Android/openandroid/cleaner"
 	"github.com/Open-Android/openandroid/intent"
 	"github.com/Open-Android/openandroid/metadata"
 	"github.com/Open-Android/openandroid/stringApk"
@@ -18,6 +19,7 @@ var countMutex = &sync.Mutex{}
 var wg sync.WaitGroup
 
 func Runner(config utils.ConfigData) {
+	cleaner.CleanDirectory(config)
 	cacheTable := &cache.CacheTable{}
 	length := cacheTable.Initialize(config)
 	go cacheTable.Runner()

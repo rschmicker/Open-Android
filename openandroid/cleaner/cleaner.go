@@ -4,6 +4,7 @@ import (
 	"github.com/Open-Android/openandroid/cache"
 	"github.com/Open-Android/openandroid/metadata"
 	"github.com/Open-Android/openandroid/utils"
+	"log"
 	"os"
 	"strings"
 )
@@ -20,5 +21,6 @@ func CleanDirectory(config utils.ConfigData) {
 		}
 		err := os.Rename(file, newPath)
 		utils.Check(err)
+		log.Printf("Cleaned: %v", file)
 	}
 }
