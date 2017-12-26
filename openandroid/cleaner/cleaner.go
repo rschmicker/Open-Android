@@ -17,10 +17,10 @@ func CleanDirectory(config utils.ConfigData) {
 		if strings.Contains(file, "benign") {
 			newPath = config.ApkDir + "/benign/" + hash + ".apk"
 		} else {
-			newPath = config.ApkDir + "/malicious/" + hash + ".apk"
+			newPath = config.ApkDir + "/malware/" + hash + ".apk"
 		}
 		err := os.Rename(file, newPath)
 		utils.Check(err)
-		log.Printf("Cleaned: %v", file)
+		log.Printf("Cleaned: %v -> %v", file, newPath)
 	}
 }
