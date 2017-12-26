@@ -84,11 +84,8 @@ func (ct *CacheTable) Runner() {
 		if ct.IsEmpty() {
 			break
 		}
-		if ct.IsNotEmpty() {
-			ct.Populate()
-			continue
-		}
 		ct.GarbageCollector()
+		ct.Populate()
 	}
 }
 
