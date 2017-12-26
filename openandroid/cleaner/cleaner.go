@@ -36,4 +36,6 @@ func CleanDirectory(config utils.ConfigData) {
 			log.Printf("Cleaned: %v -> %v", file, newPath)
 		}(file)
 	}
+	wg.Wait()
+	close(sem)
 }
