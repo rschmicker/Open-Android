@@ -94,30 +94,31 @@ func GetFileSize(path string) uint64 {
 
 func (ct *CacheTable) Runner() {
 	for {
-		CacheTableMutex.Lock()
-		if len(ct.Table) == 0 && len(ct.Files) == 0 {
-			CacheTableMutex.Unlock()
+		if ct.IsEmpty() {
 			break
 		}
-		if len(ct.Table) == 0 && len(ct.Files) != 0 {
-			CacheTableMutex.Unlock()
+		if ct.IsNotEmpty() {
 			ct.Populate(ct.Length)
 			continue
 		}
-		for i := 0; i < len(ct.Table); i++ {
-			file := ct.Table[i]
-			if file.Completed {
-				fileSize := GetFileSize(file.FilePath)
-				err := os.Remove(file.FilePath)
-				utils.Check(err)
-				ct.Table[i] = ct.Table[len(ct.Table)-1]
-				ct.Table = ct.Table[:len(ct.Table)-1]
-				log.Println("Removed: " + metadata.GetApkName(file.FilePath) + " from cache")
-				ct.CurrentSize -= fileSize
-			}
+		ct.GarbageCollector()
+	}
+}
+
+func (ct *CacheTable) GarbageCollector() {
+	CacheTableMutex.Lock()
+	defer CacheTableMutex.Unlock()
+	for i := 0; i < len(ct.Table); i++ {
+		file := ct.Table[i]
+		if file.Completed {
+			fileSize := GetFileSize(file.FilePath)
+			err := os.Remove(file.FilePath)
+			utils.Check(err)
+			ct.Table[i] = ct.Table[len(ct.Table)-1]
+			ct.Table = ct.Table[:len(ct.Table)-1]
+			log.Println("Removed: " + metadata.GetApkName(file.FilePath) + " from cache")
+			ct.CurrentSize -= fileSize
 		}
-		CacheTableMutex.Unlock()
-		ct.Populate(ct.Length)
 	}
 }
 
@@ -135,6 +136,12 @@ func (ct *CacheTable) IsEmpty() bool {
 	CacheTableMutex.Lock()
 	defer CacheTableMutex.Unlock()
 	return (len(ct.Table) == 0 && len(ct.Files) == 0)
+}
+
+func (ct *CacheTable) IsNotEmpty() bool {
+	CacheTableMutex.Lock()
+	defer CacheTableMutex.Unlock()
+	return (len(ct.Table) == 0 && len(ct.Files) != 0)
 }
 
 func (ct *CacheTable) GetFilePath() string {
