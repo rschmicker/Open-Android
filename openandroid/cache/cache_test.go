@@ -18,7 +18,7 @@ func (s *CacheTestSuite) TestgetPaths(c *C) {
 	c.Assert(err, IsNil)
 	config := utils.ReadConfig(configPath)
 	testLoc := config.ApkDir
-	paths := getPaths(testLoc, ".apk")
+	paths := GetPaths(testLoc, ".apk")
 	c.Check(len(paths), Equals, 1)
 }
 

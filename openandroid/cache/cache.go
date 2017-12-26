@@ -38,7 +38,7 @@ func (ct *CacheTable) Initialize(config utils.ConfigData) int {
 	ct.Length = config.CacheSize
 	ct.CurrentSize = 0
 	ct.DirectoryToCache = config.ApkDir
-	ct.Files = getPaths(ct.DirectoryToCache, ".apk")
+	ct.Files = GetPaths(ct.DirectoryToCache, ".apk")
 	if len(ct.Files) == 0 {
 		log.Fatal("No Files found")
 	}
@@ -156,20 +156,15 @@ func (ct *CacheTable) Close() {
 	utils.Check(err)
 }
 
-func getPaths(dir string, Containing string) []string {
+func GetPaths(dir string, Containing string) []string {
 	fileList := []string{}
-	fileMap := make(map[string]string)
 	err := filepath.Walk(dir, func(path string, f os.FileInfo, err error) error {
 		if strings.Contains(path, Containing) {
-			hash := metadata.Sha256File(path)
-			fileMap[hash] = path
+			fileList = append(fileList, path)
 		}
 		return err
 	})
 	utils.Check(err)
-	for _, value := range fileMap {
-		fileList = append(fileList, value)
-	}
 	return fileList
 }
 
