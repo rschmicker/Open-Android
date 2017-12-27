@@ -12,9 +12,10 @@ import subprocess
 import requests
 
 if len(sys.argv) < 2:
-	print("evozi.py <file of package names>")
+	print("evozi.py <file of package names> <download directory>")
 	sys.exit(1)
 
+dl_loc = sys.argv[2]
 package_file = sys.argv[1]
 package_list = []
 
@@ -52,7 +53,7 @@ for package_name in package_list:
 	    for block in response.iter_content(1024):
 	        handle.write(block)
 	filehash = hashlib.sha256(open("temp.apk", 'rb').read()).hexdigest()
-	os.rename("temp.apk", "./apks/" + filehash + ".apk")
+	os.rename("temp.apk", dl_loc + "/" + filehash + ".apk")
 	print("Downloaded: " + package_name)
 	time.sleep(10)
 driver.quit()
