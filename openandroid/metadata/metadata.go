@@ -7,7 +7,6 @@ import (
 	"crypto/sha256"
 	"fmt"
 	"github.com/Open-Android/openandroid/utils"
-	"github.com/lunny/axmlParser"
 	"io"
 	"log"
 	"os"
@@ -52,16 +51,6 @@ func Sha1File(fileName string) string {
 }
 
 func GetPackageName(path string) string {
-	listener := new(axmlParser.AppNameListener)
-	_, err := axmlParser.ParseApk(path, listener)
-	if err != nil {
-		return fallbackGetPackageName(path)
-	} else {
-		return listener.PackageName
-	}
-}
-
-func fallbackGetPackageName(path string) string {
 	prog := "aapt"
 	args := []string{
 		"dump",
@@ -84,16 +73,6 @@ func fallbackGetPackageName(path string) string {
 }
 
 func GetVersion(path string) string {
-	listener := new(axmlParser.AppNameListener)
-	_, err := axmlParser.ParseApk(path, listener)
-	if err != nil {
-		return fallbackGetVersion(path)
-	} else {
-		return listener.VersionName
-	}
-}
-
-func fallbackGetVersion(path string) string {
 	prog := "aapt"
 	args := []string{
 		"dump",
