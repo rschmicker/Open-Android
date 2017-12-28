@@ -13,6 +13,8 @@ type ConfigData struct {
 	CodeDir   string `yaml:"codeDir"`
 	CacheDir  string `yaml:"cacheDir"`
 	CacheSize int    `yaml:"cacheSize"`
+	Clean     bool
+	Force     bool
 }
 
 func ReadConfig(configPath string) ConfigData {

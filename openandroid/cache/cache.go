@@ -38,8 +38,12 @@ func (ct *CacheTable) Initialize(config utils.ConfigData) int {
 	ct.CurrentSize = 0
 	ct.DirectoryToCache = config.ApkDir
 	toDoFiles := GetPaths(ct.DirectoryToCache, ".apk")
-	doneFiles := GetPaths(config.OutputDir, ".json")
-	ct.Files = CrossCompare(toDoFiles, doneFiles)
+	if config.Force == true {
+		ct.Files = toDoFiles
+	} else {
+		doneFiles := GetPaths(config.OutputDir, ".json")
+		ct.Files = CrossCompare(toDoFiles, doneFiles)
+	}
 	if len(ct.Files) == 0 {
 		log.Fatal("No Files found")
 	}

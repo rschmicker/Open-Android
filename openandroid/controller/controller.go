@@ -19,7 +19,9 @@ var countMutex = &sync.Mutex{}
 var wg sync.WaitGroup
 
 func Runner(config utils.ConfigData) {
-	cleaner.CleanDirectory(config)
+	if config.Clean == true {
+		cleaner.CleanDirectory(config)
+	}
 	cacheTable := &cache.CacheTable{}
 	length := cacheTable.Initialize(config)
 	go cacheTable.Runner()
