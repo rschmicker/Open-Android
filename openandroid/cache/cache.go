@@ -154,6 +154,7 @@ func CrossCompare(todoFiles []string, doneFiles []string) []string {
 	found := false
 	for _, todo := range todoFiles {
 		name := metadata.GetApkName(todo)
+		name = name[:len(name)-4]
 		for _, done := range doneFiles {
 			if strings.Contains(done, name) {
 				found = true
