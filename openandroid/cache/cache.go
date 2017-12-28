@@ -12,8 +12,6 @@ import (
 	"syscall"
 )
 
-var CacheTableMutex = &sync.Mutex{}
-
 type CacheTable struct {
 	Table            []CacheObject
 	RamDiskPath      string
@@ -22,6 +20,7 @@ type CacheTable struct {
 	CurrentSize      uint64
 	DirectoryToCache string
 	Files            []string
+	lock             sync.Mutex
 }
 
 type CacheObject struct {
@@ -53,8 +52,8 @@ func (ct *CacheTable) Initialize(config utils.ConfigData) int {
 }
 
 func (ct *CacheTable) Populate() {
-	CacheTableMutex.Lock()
-	defer CacheTableMutex.Unlock()
+	ct.lock.Lock()
+	defer ct.lock.Unlock()
 	end := 0
 	for i := 0; i < len(ct.Files); i++ {
 		if (ct.CurrentSize + GetFileSize(ct.Files[i])) > ct.Size {
@@ -96,8 +95,8 @@ func (ct *CacheTable) Runner() {
 }
 
 func (ct *CacheTable) GarbageCollector() {
-	CacheTableMutex.Lock()
-	defer CacheTableMutex.Unlock()
+	ct.lock.Lock()
+	defer ct.lock.Unlock()
 	for i := 0; i < len(ct.Table); i++ {
 		file := ct.Table[i]
 		if file.Completed {
@@ -123,21 +122,21 @@ func (ct *CacheTable) Completed(path string) {
 }
 
 func (ct *CacheTable) IsEmpty() bool {
-	CacheTableMutex.Lock()
-	defer CacheTableMutex.Unlock()
+	ct.lock.Lock()
+	defer ct.lock.Unlock()
 	return (len(ct.Table) == 0 && len(ct.Files) == 0)
 }
 
 func (ct *CacheTable) IsNotEmpty() bool {
-	CacheTableMutex.Lock()
-	defer CacheTableMutex.Unlock()
+	ct.lock.Lock()
+	defer ct.lock.Unlock()
 	return (len(ct.Table) == 0 && len(ct.Files) != 0)
 }
 
 func (ct *CacheTable) GetFilePath() string {
 	path := ""
-	CacheTableMutex.Lock()
-	defer CacheTableMutex.Unlock()
+	ct.lock.Lock()
+	defer ct.lock.Unlock()
 	for i := 0; i < len(ct.Table); i++ {
 		if !ct.Table[i].InProcess {
 			path = ct.Table[i].FilePath
