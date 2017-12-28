@@ -37,7 +37,9 @@ func (ct *CacheTable) Initialize(config utils.ConfigData) int {
 	utils.Check(err)
 	ct.CurrentSize = 0
 	ct.DirectoryToCache = config.ApkDir
-	ct.Files = GetPaths(ct.DirectoryToCache, ".apk")
+	toDoFiles := GetPaths(ct.DirectoryToCache, ".apk")
+	doneFiles := GetPaths(config.OutputDir, ".json")
+	ct.Files = CrossCompare(toDoFiles, doneFiles)
 	if len(ct.Files) == 0 {
 		log.Fatal("No Files found")
 	}
@@ -145,6 +147,26 @@ func (ct *CacheTable) GetFilePath() string {
 func (ct *CacheTable) Close() {
 	err := os.RemoveAll(ct.RamDiskPath)
 	utils.Check(err)
+}
+
+func CrossCompare(todoFiles []string, doneFiles []string) []string {
+	ret := []string{}
+	found := false
+	for _, todo := range todoFiles {
+		name := metadata.GetApkName(todo)
+		for _, done := range doneFiles {
+			if strings.Contains(done, name) {
+				found = true
+				log.Printf("Skipping: %v already completed...", todo)
+				break
+			}
+		}
+		if found == false {
+			ret = append(ret, todo)
+		}
+		found = false
+	}
+	return ret
 }
 
 func GetPaths(dir string, Containing string) []string {
