@@ -138,10 +138,22 @@ func (ct *CacheTable) GetFilePath() string {
 		if !ct.Table[i].InProcess {
 			path = ct.Table[i].FilePath
 			ct.Table[i].InProcess = true
+			ct.RemoveFileFromList(ct.Table[i].FilePath)
 			break
 		}
 	}
 	return path
+}
+
+func (ct *CacheTable) RemoveFileFromList(filePath string) {
+	name := metadata.GetApkName(filePath)
+	name = name[:len(name)-4]
+	for i, file := range ct.Files {
+		if strings.Contains(file, name) {
+			ct.Files[i] = ct.Files[len(ct.Files)-1]
+			ct.Files = ct.Files[:len(ct.Files)-1]
+		}
+	}
 }
 
 func (ct *CacheTable) Close() {
