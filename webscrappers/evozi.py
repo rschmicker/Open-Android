@@ -10,6 +10,7 @@ import hashlib
 import os
 import subprocess
 import requests
+import shutil
 
 if len(sys.argv) < 2:
 	print("evozi.py <file of package names> <download directory>")
@@ -34,26 +35,36 @@ profile.set_preference('browser.helperApps.neverAsk.saveToDisk', '*')
 #driver = webdriver.Firefox(profile)
 driver = webdriver.PhantomJS()
 driver.set_window_size(1120, 550)
+counter = 0
 for package_name in package_list:
-	driver.get(url)
-	time.sleep(5)
-	print("Url: " + url)
-	package_name_box = driver.find_element_by_class_name("form-control")
-	package_name_box.send_keys(package_name)
-	print("Package: " + package_name)
-	submit_button = driver.find_element_by_class_name("btn").click()
-	time.sleep(5)
-	dl_button = driver.find_element_by_class_name("btn-success")
-	link = dl_button.get_attribute("href")
-	#link = "http" + link[5:]
-	print("Link: " + link)
-	response = requests.get(link, stream=True) #, verify=False)
-	response.raise_for_status()
-	with open('temp.apk', 'wb') as handle:
-	    for block in response.iter_content(1024):
-	        handle.write(block)
-	filehash = hashlib.sha256(open("temp.apk", 'rb').read()).hexdigest()
-	os.rename("temp.apk", dl_loc + "/" + filehash + ".apk")
-	print("Downloaded: " + package_name)
-	time.sleep(10)
+	try:
+		driver.get(url)
+		time.sleep(30)
+		print("Url: " + url)
+		package_name_box = driver.find_element_by_class_name("form-control")
+		package_name_box.send_keys(package_name)
+		print("Package: " + package_name)
+		submit_button = driver.find_element_by_class_name("btn").click()
+		time.sleep(5)
+		dl_button = driver.find_element_by_class_name("btn-success")
+		link = dl_button.get_attribute("href")
+		print("Link: " + link)
+		response = requests.get(link, stream=True)
+		response.raise_for_status()
+		with open('temp.apk', 'wb') as handle:
+		    for block in response.iter_content(1024):
+		        handle.write(block)
+		stats = os.stat("temp.apk")
+		if (stats.st_size < (20 * 1024)):
+		    time.sleep(30)
+		    continue
+		filehash = hashlib.sha256(open("temp.apk", 'rb').read()).hexdigest()
+		shutil.move("temp.apk", dl_loc + "/" + filehash + ".apk")
+		print("Downloaded: " + package_name)
+		time.sleep(30)
+		counter += 1
+		print(str(float(counter)/float(len(package_list)) * 100.0) + "%")
+	except:
+		counter += 1
+		continue
 driver.quit()
