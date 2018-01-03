@@ -4,7 +4,9 @@ import (
 	yaml "gopkg.in/yaml.v2"
 	"io/ioutil"
 	"log"
+	"os"
 	"path/filepath"
+	"strings"
 )
 
 type ConfigData struct {
@@ -34,6 +36,38 @@ func ReadConfig(configPath string) ConfigData {
 	Check(err)
 
 	return config
+}
+
+func GetPaths(dir string, Containing string) []string {
+	fileList := []string{}
+	err := filepath.Walk(dir, func(path string, f os.FileInfo, err error) error {
+		if strings.Contains(path, Containing) {
+			fileList = append(fileList, path)
+		}
+		return err
+	})
+	Check(err)
+	return fileList
+}
+
+func CrossCompare(todoFiles []string, doneFiles []string) []string {
+	ret := []string{}
+	found := false
+	for _, todo := range todoFiles {
+		_, name := filepath.Split(todo)
+		for _, done := range doneFiles {
+			if strings.Contains(done, name) {
+				found = true
+				log.Printf("Skipping: %v already completed...", todo)
+				break
+			}
+		}
+		if found == false {
+			ret = append(ret, todo)
+		}
+		found = false
+	}
+	return ret
 }
 
 func Check(err error) {

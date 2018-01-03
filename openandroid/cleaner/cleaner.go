@@ -1,7 +1,6 @@
 package cleaner
 
 import (
-	"github.com/Open-Android/openandroid/cache"
 	"github.com/Open-Android/openandroid/metadata"
 	"github.com/Open-Android/openandroid/utils"
 	"log"
@@ -14,7 +13,7 @@ import (
 func CleanDirectory(config utils.ConfigData) {
 	var wg sync.WaitGroup
 	sem := make(chan struct{}, runtime.NumCPU())
-	fileList := cache.GetPaths(config.ApkDir, ".apk")
+	fileList := utils.GetPaths(config.ApkDir, ".apk")
 	for _, file := range fileList {
 		wg.Add(1)
 		go func(file string) {
