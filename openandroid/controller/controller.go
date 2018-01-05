@@ -1,9 +1,9 @@
 package controller
 
 import (
+	"github.com/FileCache/cache"
 	"github.com/Open-Android/openandroid/apis"
 	. "github.com/Open-Android/openandroid/apkdata"
-	"github.com/Open-Android/openandroid/cache"
 	"github.com/Open-Android/openandroid/cleaner"
 	"github.com/Open-Android/openandroid/intent"
 	"github.com/Open-Android/openandroid/metadata"
@@ -23,21 +23,30 @@ func Runner(config utils.ConfigData) {
 		cleaner.CleanDirectory(config)
 	}
 	cacheTable := &cache.CacheTable{}
-	length := cacheTable.Initialize(config)
+	cacheTable.RamDiskPath = config.CacheDir + "/cache/"
+	toDoFiles := utils.GetPaths(config.ApkDir, ".apk")
+	if config.Force == true {
+		cacheTable.Files = toDoFiles
+	} else {
+		doneFiles := utils.GetPaths(config.OutputDir, ".json")
+		cacheTable.Files = utils.CrossCompare(toDoFiles, doneFiles)
+	}
+	length := len(cacheTable.Files)
+	cacheTable.Initialize()
 	go cacheTable.Runner()
 	sem := make(chan struct{}, runtime.NumCPU())
 	count := 0
-	for i := 0; i < length; i++ {
-		if cacheTable.IsEmpty() {
-			break
-		}
+	for !cacheTable.IsEmpty() {
 		wg.Add(1)
+		sem <- struct{}{}
 		go func() {
-			sem <- struct{}{}
 			apk := cacheTable.GetFilePath()
 			defer cacheTable.Completed(apk)
 			defer func() { <-sem }()
 			defer wg.Done()
+			if apk == "" {
+				return
+			}
 			extract(apk, config)
 			countMutex.Lock()
 			count++
