@@ -17,11 +17,11 @@ def download(url):
 	try:
 		response = requests.get(url, stream=True)
 		response.raise_for_status()
-		with open('temp3.apk', 'wb') as handle:
+		with open('temp2.apk', 'wb') as handle:
 			for block in response.iter_content(1024):
 				handle.write(block)
-		filehash = hashlib.sha256(open("temp3.apk", 'rb').read()).hexdigest()
-		shutil.move("temp3.apk", dl_loc + "/" + filehash + ".apk")
+		filehash = hashlib.sha256(open("temp2.apk", 'rb').read()).hexdigest()
+		shutil.move("temp2.apk", dl_loc + "/" + filehash + ".apk")
 		print("Downloaded: " + str(url))
 		time.sleep(10)
 	except:
@@ -42,7 +42,7 @@ def crawl_site(url):
 			crawl_site(url + next_link)
 
 def main():
-	base_url = "http://apk-downloaders.com/apps/2018/"
+	base_url = "http://apkleecher.com/apps/2018/"
 	if(len(sys.argv) < 2):
 		print("Usage: apk-downloaders <download dir>")
 		sys.exit(1)
