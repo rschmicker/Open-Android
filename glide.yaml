@@ -4,3 +4,4 @@ import:
 - package: gopkg.in/check.v1
 - package: github.com/lunny/axmlParser
 - package: github.com/go-xweb/log
+- package: github.com/rschmicker/FileCache

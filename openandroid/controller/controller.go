@@ -1,7 +1,6 @@
 package controller
 
 import (
-	"github.com/FileCache/cache"
 	"github.com/Open-Android/openandroid/apis"
 	. "github.com/Open-Android/openandroid/apkdata"
 	"github.com/Open-Android/openandroid/cleaner"
@@ -9,6 +8,7 @@ import (
 	"github.com/Open-Android/openandroid/metadata"
 	"github.com/Open-Android/openandroid/stringApk"
 	"github.com/Open-Android/openandroid/utils"
+	"github.com/rschmicker/FileCache/cache"
 	"log"
 	"runtime"
 	"sync"
