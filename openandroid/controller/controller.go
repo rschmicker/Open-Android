@@ -64,7 +64,11 @@ func Runner(config utils.ConfigData) {
 			if apk == "" {
 				return
 			}
-			extract(apk, config)
+			err := extract(apk, config)
+			if err != nil {
+				log.Printf("Warning: " + apk + " is not a valid APK file")
+				return
+			}
 			countMutex.Lock()
 			count++
 			countMutex.Unlock()
@@ -75,17 +79,25 @@ func Runner(config utils.ConfigData) {
 	}
 	wg.Wait()
 	close(sem)
+	log.Printf("All files parsed... clearing cache...")
 	cacheTable.Close()
 }
 
-func extract(path string, config utils.ConfigData) {
+func extract(path string, config utils.ConfigData) error {
 	apkd := &ApkData{}
-	apkd.GetMetaData(path)
-	apkd.IsMalicious(path)
+	err := apkd.GetMetaData(path)
+	if err != nil {
+		return err
+	}
+	err = apkd.IsMalicious(path, config.VtApiKey, config.VtApiCheck)
+	if err != nil {
+		log.Printf(err.Error())
+	}
 	apkd.Intents = intent.GetIntents(path)
 	javaMutex.Lock()
 	apkd.Apis = apis.GetApis(path, config.CodeDir)
 	apkd.Strings = stringApk.GetStrings(path, config.CodeDir)
 	javaMutex.Unlock()
 	apkd.WriteJSON(config.OutputDir)
+	return nil
 }

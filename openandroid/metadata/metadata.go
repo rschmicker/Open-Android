@@ -5,6 +5,7 @@ import (
 	"crypto/md5"
 	"crypto/sha1"
 	"crypto/sha256"
+	"errors"
 	"fmt"
 	"github.com/Open-Android/openandroid/utils"
 	"io"
@@ -72,7 +73,7 @@ func GetPackageName(path string) string {
 	return strings.Split(data[0], "package: ")[1]
 }
 
-func GetVersion(path string) string {
+func GetVersion(path string) (string, error) {
 	prog := "aapt"
 	args := []string{
 		"dump",
@@ -85,16 +86,19 @@ func GetVersion(path string) string {
 	cmd.Stderr = &errout
 	err := cmd.Run()
 	if err != nil {
-		return ""
+		return "", errors.New("Not an APK")
 	}
 	if errout.String() != "" {
 		log.Printf(errout.String())
+	}
+	if strings.Contains(out.String(), "ERROR") {
+		return "", errors.New("Not an APK")
 	}
 	data := strings.Split(out.String(), "\n")
 	version := data[0]
 	version = strings.Split(version, "versionName='")[1]
 	version = strings.Split(version, "'")[0]
-	return version
+	return version, nil
 }
 
 func GetApkName(path string) string {

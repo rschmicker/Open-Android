@@ -10,13 +10,14 @@ import (
 )
 
 type ConfigData struct {
-	ApkDir    string `yaml:"apkDir"`
-	OutputDir string `yaml:"outputDir"`
-	CodeDir   string `yaml:"codeDir"`
-	CacheDir  string `yaml:"cacheDir"`
-	CacheSize int    `yaml:"cacheSize"`
-	Clean     bool
-	Force     bool
+	ApkDir     string `yaml:"apkDir"`
+	OutputDir  string `yaml:"outputDir"`
+	CodeDir    string `yaml:"codeDir"`
+	CacheDir   string `yaml:"cacheDir"`
+	Clean      bool
+	Force      bool
+	VtApiCheck bool
+	VtApiKey   string `yaml:"vtapikey"`
 }
 
 func ReadConfig(configPath string) ConfigData {

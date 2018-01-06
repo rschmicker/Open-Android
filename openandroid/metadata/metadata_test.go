@@ -58,7 +58,8 @@ func (s *MetaDataTestSuite) TestGetVersion(c *C) {
 	c.Assert(err, IsNil)
 	config := utils.ReadConfig(configPath)
 	testLoc := config.ApkDir + "/Facebook Lite_v70.0.0.9.116_apkpure.com.apk"
-	version := GetVersion(testLoc)
+	version, err := GetVersion(testLoc)
+	c.Assert(err, IsNil)
 	testVersion := "70.0.0.9.116"
 	c.Check(version, Equals, testVersion)
 }
