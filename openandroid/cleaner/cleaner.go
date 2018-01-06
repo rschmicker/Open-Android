@@ -21,10 +21,10 @@ func CleanDirectory(config utils.ConfigData) {
 	for _, file := range fileList {
 		r, err := os.Open(file)
 		utils.Check(err)
-		defer r.Close()
 		var header [2]byte
 		_, err = io.ReadFull(r, header[:])
 		utils.Check(err)
+		r.Close()
 		magic := fmt.Sprintf("%s", header)
 		if magic != "PK" {
 			log.Printf("Unknown file: %v", file)
