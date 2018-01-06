@@ -1,10 +1,14 @@
 package cleaner
 
 import (
+	"bufio"
+	"fmt"
 	"github.com/Open-Android/openandroid/metadata"
 	"github.com/Open-Android/openandroid/utils"
+	"io"
 	"log"
 	"os"
+	"os/exec"
 	"runtime"
 	"strings"
 	"sync"
@@ -14,6 +18,29 @@ func CleanDirectory(config utils.ConfigData) {
 	var wg sync.WaitGroup
 	sem := make(chan struct{}, runtime.NumCPU())
 	fileList := utils.GetPaths(config.ApkDir, ".apk")
+	for _, file := range fileList {
+		r, err := os.Open(file)
+		utils.Check(err)
+		defer r.Close()
+		var header [2]byte
+		_, err = io.ReadFull(r, header[:])
+		utils.Check(err)
+		magic := fmt.Sprintf("%s", header)
+		if magic != "PK" {
+			log.Printf("Unknown file: %v", file)
+			out, err := exec.Command("xxd " + file + " | head -n10").Output()
+			utils.Check(err)
+			log.Printf(string(out))
+			reader := bufio.NewReader(os.Stdin)
+			log.Printf("Delete file? (y/N): ")
+			text, err := reader.ReadString('\n')
+			utils.Check(err)
+			if text == "y" {
+				err = os.Remove(file)
+				utils.Check(err)
+			}
+		}
+	}
 	for _, file := range fileList {
 		wg.Add(1)
 		go func(file string) {

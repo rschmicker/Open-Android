@@ -10,8 +10,11 @@ import (
 	"github.com/Open-Android/openandroid/utils"
 	"github.com/rschmicker/FileCache/cache"
 	"log"
+	"os"
+	"os/signal"
 	"runtime"
 	"sync"
+	"syscall"
 )
 
 var javaMutex = &sync.Mutex{}
@@ -33,6 +36,20 @@ func Runner(config utils.ConfigData) {
 	}
 	length := len(cacheTable.Files)
 	cacheTable.Initialize()
+
+	sigChannel := make(chan os.Signal)
+	go func() {
+		for sig := range sigChannel {
+			switch sig {
+			case syscall.SIGINT:
+				log.Printf("Clearing cache...")
+				cacheTable.Close()
+				os.Exit(1)
+			}
+		}
+	}()
+	signal.Notify(sigChannel, syscall.SIGINT)
+
 	go cacheTable.Runner()
 	sem := make(chan struct{}, runtime.NumCPU())
 	count := 0
