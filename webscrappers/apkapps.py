@@ -17,18 +17,20 @@ def download(url):
 		for block in response.iter_content(1024):
 			handle.write(block)
 	if(os.path.getsize('temp4.apk') < 1024):
-		print("invalid file... continuing...")
-		time.sleep(10)
-		return
+		return False
 	filehash = hashlib.sha256(open("temp4.apk", 'rb').read()).hexdigest()
 	shutil.move("temp4.apk", dl_loc + "/" + filehash + ".apk")
-	print("Downloaded: " + str(url))
-	time.sleep(10)
+	return True
 
 def crawl_site(url):
 	for i in range(10000):
 		e_num = base64.b64encode(str(i))
-		download(url + e_num)
+		status = download(url + e_num)
+		if(status):
+			print("(" + str(float(i)/float(10000)*float(100)) +  "%) Downloaded: " + str(url))
+		else:
+			print("(" + str(float(i)/float(10000)*float(100)) +  "%) Invalid APK file... continuing...")
+		time.sleep(10)
 
 def main():
 	base_url = "https://apkapps.com/apps/download/"
