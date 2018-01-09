@@ -6,6 +6,7 @@ import requests
 import time
 import shutil
 import base64
+import hashlib
 
 dl_loc = ""
 
