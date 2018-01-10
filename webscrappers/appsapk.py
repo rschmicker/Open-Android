@@ -37,14 +37,16 @@ ignore_links = [
 	"http://www.appsapk.com/sitemap_index.xml",
 	"http://www.appsapk.com/apps/notes/",
 	"http://www.appsapk.com/android-wallpapers/",
+	"http://www.appsapk.com/android-wallpaper/",
 ]
 
 dl_loc = ""
 
 def init_webdriver():
-	#driver = webdriver.PhantomJS()
-	#driver.set_window_size(1120, 550)
-	return webdriver.Chrome()
+	driver = webdriver.PhantomJS()
+	driver.set_window_size(1120, 550)
+	return driver
+	#return webdriver.Chrome()
 
 def good_link(link):
 	global ignore_links
@@ -83,13 +85,15 @@ def get_current_page_links(driver, url):
 def get_all_links(driver, url):
 	print("Moving to: " + url)
 	link_builder = get_current_page_links(driver, url)
-	for i in range(2, 2):
+	for i in range(2, 224):
 		append_url = url + "page/" + str(i) + "/"
 		print("Moving to: " + append_url)
-		link_builder.append(get_current_page_links(driver, append_url))
+		tmp_links = get_current_page_links(driver, append_url)
+		for tmp in tmp_links:
+			link_builder.append(tmp)
 		time.sleep(5)
 		print(link_builder)
-		#time.sleep(random.randit(5, 10))
+		time.sleep(random.randint(5, 10))
 	return link_builder
 
 def download(url):
@@ -107,6 +111,7 @@ def download(url):
 def iterate_links(driver, links):
 	for link in links:
 		driver.get(link)
+		print("Currently at: " + link)
 		time.sleep(5)
 		try:
 			dl_button = driver.find_element_by_class_name("download")
@@ -139,37 +144,3 @@ def main():
 	driver.quit()
 
 main()
-
-"""counter = 0
-for package_name in package_list:
-	try:
-		driver.get(url)
-		time.sleep(30)
-		print("Url: " + url)
-		package_name_box = driver.find_element_by_class_name("form-control")
-		package_name_box.send_keys(package_name)
-		print("Package: " + package_name)
-		submit_button = driver.find_element_by_class_name("btn").click()
-		time.sleep(5)
-		dl_button = driver.find_element_by_class_name("btn-success")
-		link = dl_button.get_attribute("href")
-		print("Link: " + link)
-		response = requests.get(link, stream=True)
-		response.raise_for_status()
-		with open('temp.apk', 'wb') as handle:
-		    for block in response.iter_content(1024):
-		        handle.write(block)
-		stats = os.stat("temp.apk")
-		if (stats.st_size < (20 * 1024)):
-		    time.sleep(30)
-		    continue
-		filehash = hashlib.sha256(open("temp.apk", 'rb').read()).hexdigest()
-		shutil.move("temp.apk", dl_loc + "/" + filehash + ".apk")
-		print("Downloaded: " + package_name)
-		time.sleep(30)
-		counter += 1
-		print(str(float(counter)/float(len(package_list)) * 100.0) + "%")
-	except:
-		counter += 1
-		continue
-driver.quit()"""
