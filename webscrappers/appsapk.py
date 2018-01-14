@@ -111,6 +111,8 @@ def download(url):
 def iterate_links(driver, links):
 	for link in links:
 		driver.get(link)
+		if str(requests.get(link).status_code) == '404' or str(requests.get(link).status_code) == '301':
+			continue
 		print("Currently at: " + link)
 		time.sleep(5)
 		try:
@@ -119,6 +121,8 @@ def iterate_links(driver, links):
 			dl_button = driver.find_element_by_class_name("apna-download")
 		dl_link = dl_button.get_attribute("href")
 		print("Download Btn: " + dl_link)
+		if str(requests.get(link).status_code) == '404' or str(requests.get(link).status_code) == '301' or str(requests.get(link).status_code) == '502':
+			continue
 		driver.get(dl_link)
 		time.sleep(5)
 		try:

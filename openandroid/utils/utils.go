@@ -42,7 +42,9 @@ func ReadConfig(configPath string) ConfigData {
 func GetPaths(dir string, Containing string) []string {
 	fileList := []string{}
 	err := filepath.Walk(dir, func(path string, f os.FileInfo, err error) error {
-		if strings.Contains(path, Containing) {
+		fileInfo, errS := os.Stat(path)
+		Check(errS)
+		if strings.Contains(path, Containing) && fileInfo.Mode().IsRegular() {
 			fileList = append(fileList, path)
 		}
 		return err

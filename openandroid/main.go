@@ -30,6 +30,7 @@ func main() {
 	log.Printf("codeDir: " + config.CodeDir)
 	log.Printf("clean: %t", config.Clean)
 	log.Printf("force: %t", config.Force)
+	log.Printf("vt: %t", config.VtApiCheck)
 
 	controller.Runner(config)
 }
