@@ -22,13 +22,13 @@ var countMutex = &sync.Mutex{}
 var wg sync.WaitGroup
 
 func Runner(config utils.ConfigData) {
-	if config.Clean == true {
+	if config.Clean {
 		cleaner.CleanDirectory(config)
 	}
 	cacheTable := &cache.CacheTable{}
 	cacheTable.RamDiskPath = config.CacheDir + "/cache/"
 	toDoFiles := utils.GetPaths(config.ApkDir, ".apk")
-	if config.Force == true {
+	if config.Force {
 		cacheTable.Files = toDoFiles
 	} else {
 		doneFiles := utils.GetPaths(config.OutputDir, ".json")

@@ -58,6 +58,7 @@ func CrossCompare(todoFiles []string, doneFiles []string) []string {
 	found := false
 	for _, todo := range todoFiles {
 		_, name := filepath.Split(todo)
+		name = name[:len(name)-4]
 		for _, done := range doneFiles {
 			if strings.Contains(done, name) {
 				found = true
@@ -65,7 +66,7 @@ func CrossCompare(todoFiles []string, doneFiles []string) []string {
 				break
 			}
 		}
-		if found == false {
+		if !found {
 			ret = append(ret, todo)
 		}
 		found = false

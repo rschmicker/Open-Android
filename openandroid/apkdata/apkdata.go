@@ -28,7 +28,7 @@ type ApkData struct {
 	PackageName string
 	Version     string
 	Intents     []string
-	Malicious   bool
+	Malicious   string
 }
 
 type VirusTotal struct {
@@ -78,40 +78,39 @@ func (apk *ApkData) IsMalicious(apkPath string, vtapikey string, vtapicheck bool
 	} else {
 		vti, err := NewVirusTotal(vtapikey)
 		utils.Check(err)
-		_, name := filepath.Split(apkPath)
-		hash := name[:len(name)-4]
-		rr, err := vti.checkReport(hash)
-		if err != nil {
-			apk.Malicious = fallbackMalicious(apkPath)
-			return nil
-		}
-		if rr.Positives > 0 {
-			apk.Malicious = true
-		} else if rr.Md5 == "" && rr.Positives == 0 {
-			log.Printf("Hash not found: " + hash + " scanning now...")
+		rr, err := vti.checkReport(apk.Sha256)
+		if err != nil || (rr.Md5 == "" && rr.Positives == 0) {
+			log.Printf("Hash not found: " + apk.Sha256 + " scanning now...")
 			err := vti.scanApk(apkPath)
 			if err != nil {
 				apk.Malicious = fallbackMalicious(apkPath)
 				return err
 			}
 			time.Sleep(2 * time.Minute)
-			rr, err = vti.checkReport(hash)
+			rr, err = vti.checkReport(apk.Sha256)
 			if err != nil {
 				apk.Malicious = fallbackMalicious(apkPath)
 				return err
 			}
-			if rr.Positives > 0 {
-				apk.Malicious = true
-			}
 		} else {
-			apk.Malicious = false
+			if rr.Positives > 0 {
+				apk.Malicious = "true"
+			} else {
+				apk.Malicious = "false"
+			}
 		}
 	}
 	return nil
 }
 
-func fallbackMalicious(apkPath string) bool {
-	return strings.Contains(apkPath, "malware")
+func fallbackMalicious(apkPath string) string {
+	if strings.Contains(apkPath, "benign") {
+		return "false"
+	} else if strings.Contains(apkPath, "malware") {
+		return "true"
+	} else {
+		return "unknown"
+	}
 }
 
 func (vt *VirusTotal) scanApk(apkPath string) error {

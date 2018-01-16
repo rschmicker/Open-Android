@@ -1,6 +1,7 @@
 package apkdata
 
 import (
+	"github.com/Open-Android/openandroid/metadata"
 	"github.com/Open-Android/openandroid/utils"
 	. "gopkg.in/check.v1"
 	"path/filepath"
@@ -19,8 +20,9 @@ func (s *ApkDataTestSuite) TestIsMalicious(c *C) {
 	config := utils.ReadConfig(configPath)
 	testLoc := config.ApkDir + "/Facebook Lite_v70.0.0.9.116_apkpure.com.apk"
 	apkd := &ApkData{}
+	apkd.Sha256 = metadata.Sha256File(testLoc)
 	apkd.IsMalicious(testLoc, config.VtApiKey, true)
-	c.Check(apkd.Malicious, Equals, false)
+	c.Check(apkd.Malicious, Equals, "false")
 }
 
 func (s *ApkDataTestSuite) TestcheckReport(c *C) {
