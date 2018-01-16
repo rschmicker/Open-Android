@@ -48,5 +48,19 @@ def main():
 		sys.exit(1)
 	global dl_loc
 	dl_loc = sys.argv[1]
-	crawl_site(base_url)	
+	try:
+		access = sys.argv[2]
+		today = date.today()
+		if today.month < 10:
+			month = "0" + str(today.month) + "/"
+		else:
+			month = str(today.month) + "/"
+		if today.day < 10:
+			day = "0" + str(today.day) + "/"
+		else:
+			day = str(today.day) + "/"
+		base_url += month + day
+		crawl_site(base_url)
+	except:
+		crawl_site(base_url)	
 main()

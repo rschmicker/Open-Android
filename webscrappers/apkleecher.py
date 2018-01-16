@@ -6,6 +6,7 @@ import requests
 import hashlib
 import time
 import shutil
+from datetime import date
 
 dl_loc = ""
 
@@ -44,9 +45,23 @@ def crawl_site(url):
 def main():
 	base_url = "http://apkleecher.com/apps/2018/"
 	if(len(sys.argv) < 2):
-		print("Usage: apk-downloaders <download dir>")
+		print("Usage: apk-downloaders <download dir> <today>")
 		sys.exit(1)
 	global dl_loc
 	dl_loc = sys.argv[1]
-	crawl_site(base_url)	
+	try:
+		access = sys.argv[2]
+		today = date.today()
+		if today.month < 10:
+			month = "0" + str(today.month) + "/"
+		else:
+			month = str(today.month) + "/"
+		if today.day < 10:
+			day = "0" + str(today.day) + "/"
+		else:
+			day = str(today.day) + "/"
+		base_url += month + day
+		crawl_site(base_url)
+	except:
+		crawl_site(base_url)
 main()
