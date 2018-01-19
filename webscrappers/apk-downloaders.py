@@ -6,6 +6,7 @@ import requests
 import hashlib
 import time
 import shutil
+from datetime import date
 
 dl_loc = ""
 
