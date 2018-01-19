@@ -1,11 +1,13 @@
 package utils
 
 import (
+	"fmt"
 	yaml "gopkg.in/yaml.v2"
 	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 )
 
@@ -76,6 +78,8 @@ func CrossCompare(todoFiles []string, doneFiles []string) []string {
 
 func Check(err error) {
 	if err != nil {
-		log.Fatal(err)
+		pc, fn, line, _ := runtime.Caller(1)
+		errStr := fmt.Sprintf("Error: in %s[%s:%d] %v", runtime.FuncForPC(pc).Name(), fn, line, err)
+		log.Fatal(errStr)
 	}
 }
