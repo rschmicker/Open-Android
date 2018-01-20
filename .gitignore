@@ -1,2 +1,10 @@
-.vendor/
+vendor/
 openandroid/glide.lock
+.so
+data/
+testAPK/
+*nullclasses.dex
+*.apk
+*.log
+*.json
+temp/
