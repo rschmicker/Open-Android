@@ -5,7 +5,6 @@ import (
     "log"
     "net/http"
     "path/filepath"
-    "html/template"
 )
 
 type Config struct {
@@ -14,22 +13,12 @@ type Config struct {
 }
 
 var c = Config{
-	TemplateDir: "/home/rschmicker/src/github.com/Open-Android/webserver/templates/",
 	KeysDir: "/home/rschmicker/src/github.com/Open-Android/webserver/keys/",
 }
 
 func Index(w http.ResponseWriter, req *http.Request) {
 	w.Header().Add("Strict-Transport-Security", "max-age=63072000; includeSubDomains")
-	templ, err := template.ParseFiles(c.TemplateDir + "index.html")
-	if err != nil {
-		log.Fatal(err)
-	}
-	err = templ.Execute(w, nil)
-    //t := template.New("index")
-    //err := t.ExecuteTemplate(w, c.TemplateDir + "index.html", nil)
-    if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-	}
+	w.Write([]byte{1, 2})
 }
 
 func main() {
