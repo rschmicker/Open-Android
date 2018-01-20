@@ -5,14 +5,36 @@ import (
     "log"
     "net/http"
     "path/filepath"
+    "html/template"
 )
+
+type Config struct {
+	TemplateDir		string
+	KeysDir 		string
+}
+
+var c = Config{
+	TemplateDir: "/home/rschmicker/src/github.com/Open-Android/webserver/templates/",
+	KeysDir: "/home/rschmicker/src/github.com/Open-Android/webserver/keys/",
+}
+
+func Index(w http.ResponseWriter, req *http.Request) {
+	w.Header().Add("Strict-Transport-Security", "max-age=63072000; includeSubDomains")
+	templ, err := template.ParseFiles(c.TemplateDir + "index.html")
+	if err != nil {
+		log.Fatal(err)
+	}
+	err = templ.Execute(w, nil)
+    //t := template.New("index")
+    //err := t.ExecuteTemplate(w, c.TemplateDir + "index.html", nil)
+    if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+}
 
 func main() {
     mux := http.NewServeMux()
-    mux.HandleFunc("/", func(w http.ResponseWriter, req *http.Request) {
-        w.Header().Add("Strict-Transport-Security", "max-age=63072000; includeSubDomains")
-        w.Write([]byte("This is an example server.\n"))
-    })
+    mux.HandleFunc("/", Index)
     cfg := &tls.Config{
         MinVersion:               tls.VersionTLS12,
         CurvePreferences:         []tls.CurveID{tls.CurveP521, tls.CurveP384, tls.CurveP256},
@@ -30,7 +52,7 @@ func main() {
         TLSConfig:    cfg,
         TLSNextProto: make(map[string]func(*http.Server, *tls.Conn, http.Handler), 0),
     }
-    cert, _ := filepath.Abs("./keys/tls.crt")
-    key, _ := filepath.Abs("./keys/tls.key")
+    cert, _ := filepath.Abs(c.KeysDir + "tls.crt")
+    key, _ := filepath.Abs(c.KeysDir + "tls.key")
     log.Fatal(srv.ListenAndServeTLS(cert, key))
 }
