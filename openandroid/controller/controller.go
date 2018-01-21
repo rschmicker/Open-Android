@@ -1,27 +1,77 @@
 package controller
 
 import (
-	"github.com/Open-Android/openandroid/apis"
-	. "github.com/Open-Android/openandroid/apkdata"
+	"encoding/json"
 	"github.com/Open-Android/openandroid/cleaner"
-	"github.com/Open-Android/openandroid/intent"
-	"github.com/Open-Android/openandroid/metadata"
-	"github.com/Open-Android/openandroid/stringApk"
 	"github.com/Open-Android/openandroid/utils"
 	"github.com/rschmicker/FileCache/cache"
+	"io/ioutil"
 	"log"
 	"os"
 	"os/signal"
+	"path/filepath"
+	"plugin"
 	"runtime"
 	"sync"
 	"syscall"
 )
 
-var javaMutex = &sync.Mutex{}
+type WorkerData struct {
+	CacheTable *cache.CacheTable
+	Sem        chan struct{}
+	Config     utils.ConfigData
+	Length     int
+	Count      *int
+}
+
+var mutex = &sync.Mutex{}
 var countMutex = &sync.Mutex{}
 var wg sync.WaitGroup
 
 func Runner(config utils.ConfigData) {
+	count := 0
+	ct, length := initCache(config)
+	wd := &WorkerData{
+		CacheTable: ct,
+		Sem:        make(chan struct{}, runtime.NumCPU()),
+		Config:     config,
+		Length:     length,
+		Count:      &count,
+	}
+	go wd.CacheTable.Runner()
+	for !wd.CacheTable.IsEmpty() {
+		wg.Add(1)
+		wd.Sem <- struct{}{}
+		go worker(wd)
+	}
+	wg.Wait()
+	close(wd.Sem)
+	log.Printf("All files parsed... clearing cache...")
+	wd.CacheTable.Close()
+}
+
+func worker(wd *WorkerData) {
+	apk := wd.CacheTable.GetFilePath()
+	defer wd.CacheTable.Completed(apk)
+	defer func() { <-wd.Sem }()
+	defer wg.Done()
+	if apk == "" {
+		return
+	}
+	err := extract(apk, wd.Config)
+	if err != nil {
+		log.Printf("Warning: " + apk + " is not a valid APK file")
+		return
+	}
+	countMutex.Lock()
+	*wd.Count++
+	countMutex.Unlock()
+	percent := (float64(*wd.Count) / float64(wd.Length) * float64(100))
+	_, name := filepath.Split(apk)
+	log.Printf("(%.2f%%) Completed: "+name, percent)
+}
+
+func initCache(config utils.ConfigData) (*cache.CacheTable, int) {
 	if config.Clean {
 		cleaner.CleanDirectory(config)
 	}
@@ -49,55 +99,60 @@ func Runner(config utils.ConfigData) {
 		}
 	}()
 	signal.Notify(sigChannel, syscall.SIGINT)
-
-	go cacheTable.Runner()
-	sem := make(chan struct{}, runtime.NumCPU())
-	count := 0
-	for !cacheTable.IsEmpty() {
-		wg.Add(1)
-		sem <- struct{}{}
-		go func() {
-			apk := cacheTable.GetFilePath()
-			defer cacheTable.Completed(apk)
-			defer func() { <-sem }()
-			defer wg.Done()
-			if apk == "" {
-				return
-			}
-			err := extract(apk, config)
-			if err != nil {
-				log.Printf("Warning: " + apk + " is not a valid APK file")
-				return
-			}
-			countMutex.Lock()
-			count++
-			countMutex.Unlock()
-			percent := (float64(count) / float64(length) * float64(100))
-			name := metadata.GetApkName(apk)
-			log.Printf("(%.2f%%) Completed: "+name, percent)
-		}()
-	}
-	wg.Wait()
-	close(sem)
-	log.Printf("All files parsed... clearing cache...")
-	cacheTable.Close()
+	return cacheTable, length
 }
 
 func extract(path string, config utils.ConfigData) error {
-	apkd := &ApkData{}
-	err := apkd.GetMetaData(path)
-	if err != nil {
-		return err
+	jsonBuilder := make(map[string]interface{})
+	plugins := utils.GetPaths(config.CodeDir+"/plugins/", ".so")
+	for _, plug := range plugins {
+		p, err := plugin.Open(plug)
+		utils.Check(err)
+		needLock, err := p.Lookup("NeedLock")
+		utils.Check(err)
+		needLockFunc, ok := needLock.(func() bool)
+		if !ok {
+			log.Fatal("Error: Malformed NeedLock function in " + plug)
+		}
+
+		k, err := p.Lookup("GetKey")
+		utils.Check(err)
+		keyfunc, ok := k.(func() string)
+		if !ok {
+			log.Fatal("Error: Malformed GetKey function in " + plug)
+		}
+		key := keyfunc()
+
+		v, err := p.Lookup("GetValue")
+		utils.Check(err)
+		valuefunc, ok := v.(func(string, utils.ConfigData) (interface{}, error))
+		if !ok {
+			log.Fatal("Error: Malformed GetValue function in " + plug)
+		}
+		if needLockFunc() {
+			mutex.Lock()
+		}
+		result, err := valuefunc(path, config)
+		if needLockFunc() {
+			mutex.Unlock()
+		}
+		if err != nil {
+			return err
+		}
+		jsonBuilder[key] = result
 	}
-	err = apkd.IsMalicious(path, config.VtApiKey, config.VtApiCheck)
-	if err != nil {
-		log.Printf(err.Error())
-	}
-	apkd.Intents = intent.GetIntents(path)
-	javaMutex.Lock()
-	apkd.Apis = apis.GetApis(path, config.CodeDir)
-	apkd.Strings = stringApk.GetStrings(path, config.CodeDir)
-	javaMutex.Unlock()
-	apkd.WriteJSON(config.OutputDir)
+	WriteJSON(jsonBuilder, config.OutputDir)
 	return nil
+}
+
+func WriteJSON(toWrite map[string]interface{}, OutputDir string) {
+	data, err := json.Marshal(toWrite)
+	utils.Check(err)
+	Sha256, ok := toWrite["Sha256"].(string)
+	if !ok {
+		log.Fatal("Error: Count not validate Sha256 value as a string")
+	}
+	outputFile := OutputDir + "/" + Sha256 + ".json"
+	err = ioutil.WriteFile(outputFile, data, 0644)
+	utils.Check(err)
 }
