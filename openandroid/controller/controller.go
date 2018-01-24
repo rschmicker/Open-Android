@@ -2,28 +2,21 @@ package controller
 
 import (
 	"encoding/json"
-	"fmt"
 	"github.com/Open-Android/openandroid/cleaner"
 	"github.com/Open-Android/openandroid/utils"
-	"github.com/rschmicker/FileCache/cache"
 	"io/ioutil"
 	"log"
-	"os"
-	"os/signal"
 	"path/filepath"
 	"plugin"
 	"runtime"
-	"runtime/pprof"
 	"sync"
-	"syscall"
 )
 
 type WorkerData struct {
-	CacheTable *cache.CacheTable
-	Sem        chan struct{}
-	Config     utils.ConfigData
-	Length     int
-	Count      *int
+	Sem    chan struct{}
+	Config utils.ConfigData
+	Count  *int
+	Length int
 }
 
 var mutex = &sync.Mutex{}
@@ -32,44 +25,32 @@ var wg sync.WaitGroup
 
 func Runner(config utils.ConfigData) {
 	count := 0
-	ct, length := initCache(config)
+	files := Cleaner(config)
 	wd := &WorkerData{
-		CacheTable: ct,
-		Sem:        make(chan struct{}, runtime.NumCPU()),
-		Config:     config,
-		Length:     length,
-		Count:      &count,
+		Sem:    make(chan struct{}, runtime.NumCPU()),
+		Config: config,
+		Count:  &count,
+		Length: len(files),
 	}
-	go wd.CacheTable.Runner()
-	m := &runtime.MemStats{}
-	for !wd.CacheTable.IsEmpty() {
+	for _, file := range files {
 		wg.Add(1)
 		wd.Sem <- struct{}{}
-		go worker(wd)
-		runtime.ReadMemStats(m)
-		fmt.Println("Memory Acquired: ", m.Sys)
-		fmt.Println("Memory Used    : ", m.Alloc)
-		fmt.Printf("alloc [%v] \t heapAlloc [%v] \n", m.Alloc, m.HeapAlloc)
-		fmt.Printf("#goroutines: %d\n", runtime.NumGoroutine())
-
+		go worker(wd, file)
 	}
 	wg.Wait()
 	close(wd.Sem)
-	log.Printf("All files parsed... clearing cache...")
-	wd.CacheTable.Close()
 }
 
-func worker(wd *WorkerData) {
-	apk := wd.CacheTable.GetFilePath()
-	defer wd.CacheTable.Completed(apk)
+func worker(wd *WorkerData, apk string) {
+	log.Printf("Working on APK: " + apk)
 	defer func() { <-wd.Sem }()
 	defer wg.Done()
-	if apk == "" {
-		return
-	}
 	err := extract(apk, wd.Config)
 	if err != nil {
 		log.Printf("Warning: " + apk + " is not a valid APK file")
+		countMutex.Lock()
+		*wd.Count++
+		countMutex.Unlock()
 		return
 	}
 	countMutex.Lock()
@@ -80,35 +61,19 @@ func worker(wd *WorkerData) {
 	log.Printf("(%.2f%%) Completed: "+name, percent)
 }
 
-func initCache(config utils.ConfigData) (*cache.CacheTable, int) {
+func Cleaner(config utils.ConfigData) []string {
 	if config.Clean {
 		cleaner.CleanDirectory(config)
 	}
-	cacheTable := &cache.CacheTable{}
-	cacheTable.RamDiskPath = config.CacheDir + "/cache/"
+	files := []string{}
 	toDoFiles := utils.GetPaths(config.ApkDir, ".apk")
 	if config.Force {
-		cacheTable.Files = toDoFiles
+		files = toDoFiles
 	} else {
 		doneFiles := utils.GetPaths(config.OutputDir, ".json")
-		cacheTable.Files = utils.CrossCompare(toDoFiles, doneFiles)
+		files = utils.CrossCompare(toDoFiles, doneFiles)
 	}
-	length := len(cacheTable.Files)
-	cacheTable.Initialize()
-
-	sigChannel := make(chan os.Signal)
-	go func() {
-		for sig := range sigChannel {
-			switch sig {
-			case syscall.SIGINT:
-				log.Printf("Clearing cache...")
-				cacheTable.Close()
-				os.Exit(1)
-			}
-		}
-	}()
-	signal.Notify(sigChannel, syscall.SIGINT)
-	return cacheTable, length
+	return files
 }
 
 func extract(path string, config utils.ConfigData) error {
