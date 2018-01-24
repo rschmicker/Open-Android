@@ -2,6 +2,7 @@ package controller
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/Open-Android/openandroid/cleaner"
 	"github.com/Open-Android/openandroid/utils"
 	"github.com/rschmicker/FileCache/cache"
@@ -12,6 +13,7 @@ import (
 	"path/filepath"
 	"plugin"
 	"runtime"
+	"runtime/pprof"
 	"sync"
 	"syscall"
 )
@@ -39,10 +41,17 @@ func Runner(config utils.ConfigData) {
 		Count:      &count,
 	}
 	go wd.CacheTable.Runner()
+	m := &runtime.MemStats{}
 	for !wd.CacheTable.IsEmpty() {
 		wg.Add(1)
 		wd.Sem <- struct{}{}
 		go worker(wd)
+		runtime.ReadMemStats(m)
+		fmt.Println("Memory Acquired: ", m.Sys)
+		fmt.Println("Memory Used    : ", m.Alloc)
+		fmt.Printf("alloc [%v] \t heapAlloc [%v] \n", m.Alloc, m.HeapAlloc)
+		fmt.Printf("#goroutines: %d\n", runtime.NumGoroutine())
+
 	}
 	wg.Wait()
 	close(wd.Sem)
