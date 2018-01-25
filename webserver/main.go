@@ -4,6 +4,8 @@ import (
     "crypto/tls"
     "log"
     "net/http"
+    "fmt"
+    "io"
     "path/filepath"
 )
 
@@ -16,14 +18,31 @@ var c = Config{
 	KeysDir: "/home/rschmicker/src/github.com/Open-Android/webserver/keys/",
 }
 
-func Index(w http.ResponseWriter, req *http.Request) {
+func getArg(name string, aMap map[string][]string) (arg string, err error) {
+    var ok bool
+    var arglist []string
+    if arglist, ok = aMap[name]; !ok {
+        return "", fmt.Errorf("unable to obtain arg from map with key %s", name)
+    }
+    return arglist[0], nil
+}
+
+func Query(w http.ResponseWriter, req *http.Request) {
 	w.Header().Add("Strict-Transport-Security", "max-age=63072000; includeSubDomains")
-	w.Write([]byte{1, 2})
+	args := req.URL.Query()
+    q, err := getArg("q", args)
+    if err != nil {
+        log.Println("Error: " + err.Error())
+        http.Error(w, "Error: " + err.Error(), http.StatusBadRequest)
+        return
+    }
+    log.Println("q: " + q)
+    io.WriteString(w, "q: " + q)
 }
 
 func main() {
     mux := http.NewServeMux()
-    mux.HandleFunc("/", Index)
+    mux.HandleFunc("/", Query)
     cfg := &tls.Config{
         MinVersion:               tls.VersionTLS12,
         CurvePreferences:         []tls.CurveID{tls.CurveP521, tls.CurveP384, tls.CurveP256},
@@ -41,7 +60,7 @@ func main() {
         TLSConfig:    cfg,
         TLSNextProto: make(map[string]func(*http.Server, *tls.Conn, http.Handler), 0),
     }
-    cert, _ := filepath.Abs(c.KeysDir + "tls.crt")
-    key, _ := filepath.Abs(c.KeysDir + "tls.key")
+    cert, _ := filepath.Abs(c.KeysDir + "server.crt")
+    key, _ := filepath.Abs(c.KeysDir + "server.key")
     log.Fatal(srv.ListenAndServeTLS(cert, key))
 }
