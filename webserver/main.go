@@ -113,7 +113,6 @@ func Query(w http.ResponseWriter, req *http.Request) {
 	} else {
 		solrQuery += "&wt=json"
 	}
-	io.WriteString(w, "solrQuery: "+solrQuery)
 	io.WriteString(w, getSolrQuery(solrQuery))
 }
 
