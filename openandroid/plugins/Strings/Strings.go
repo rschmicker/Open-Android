@@ -15,6 +15,7 @@ func GetKey() string { return "Strings" }
 func GetValue(path string, config utils.ConfigData) (interface{}, error) {
 	prog := "java"
 	args := []string{"-Dfile.encoding=UTF-8",
+		"-Xmx512m",
 		"-cp",
 		config.CodeDir + "/plugins/Strings/:" + config.CodeDir + "/plugins/Apis/Rapid.jar",
 		"StringParser",
