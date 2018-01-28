@@ -124,6 +124,7 @@ func WriteJSON(toWrite map[string]interface{}, OutputDir string) {
 	utils.Check(err)
 	Sha256, ok := toWrite["Sha256"].(string)
 	if !ok {
+		log.Println(toWrite)
 		log.Fatal("Error: Count not validate Sha256 value as a string")
 	}
 	outputFile := OutputDir + "/" + Sha256 + ".json"

@@ -16,7 +16,7 @@ type Config struct {
 }
 
 var c = Config{
-	KeysDir: "/Users/rschmicker/src/github.com/Open-Android/webserver/keys/",
+	KeysDir: "/home/openandroid/src/github.com/Open-Android/webserver/keys/",
 }
 
 const InfoMsg string = `

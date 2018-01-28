@@ -1,6 +1,6 @@
 vendor/
 openandroid/glide.lock
-.so
+*.so
 data/
 testAPK/
 *nullclasses.dex
