@@ -2,22 +2,14 @@ package main
 
 import (
 	"crypto/tls"
+	"flag"
 	"fmt"
 	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
-	"path/filepath"
+	"os"
 )
-
-type Config struct {
-	TemplateDir string
-	KeysDir     string
-}
-
-var c = Config{
-	KeysDir: "/home/openandroid/src/github.com/Open-Android/webserver/keys/",
-}
 
 const InfoMsg string = `
 No GET parameters found!
@@ -116,7 +108,24 @@ func Query(w http.ResponseWriter, req *http.Request) {
 	io.WriteString(w, getSolrQuery(solrQuery))
 }
 
+func PrintUsage() {
+	fmt.Println(`
+Syntax:
+	>webserver -key <Directory to HTTPS key> -cert <Directory to HTTPS certificate>
+
+Example:
+	>webserver -key ./keys/server.key -cert ./keys/server.crt
+`)
+	os.Exit(1)
+}
+
 func main() {
+	keyFlag := flag.String("key", "", "Location to HTTPS key.")
+	certFlag := flag.String("cert", "", "Location to HTTPS certificate.")
+	flag.Parse()
+	if (len(*keyFlag) == 0) || (len(*certFlag) == 0) {
+		PrintUsage()
+	}
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", Query)
 	cfg := &tls.Config{
@@ -136,7 +145,5 @@ func main() {
 		TLSConfig:    cfg,
 		TLSNextProto: make(map[string]func(*http.Server, *tls.Conn, http.Handler), 0),
 	}
-	cert, _ := filepath.Abs(c.KeysDir + "server.crt")
-	key, _ := filepath.Abs(c.KeysDir + "server.key")
-	log.Fatal(srv.ListenAndServeTLS(cert, key))
+	log.Fatal(srv.ListenAndServeTLS(*certFlag, *keyFlag))
 }
