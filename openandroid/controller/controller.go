@@ -2,10 +2,12 @@ package controller
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/Open-Android/openandroid/cleaner"
 	"github.com/Open-Android/openandroid/utils"
 	"io/ioutil"
 	"log"
+	"os"
 	"path/filepath"
 	"plugin"
 	"runtime"
@@ -45,7 +47,7 @@ func worker(wd *WorkerData, apk string) {
 	log.Printf("Working on APK: " + apk)
 	defer func() { <-wd.Sem }()
 	defer wg.Done()
-	err := extract(apk, wd.Config)
+	err := extractFeatures(apk, wd.Config)
 	if err != nil {
 		log.Printf("Warning: " + apk + " is not a valid APK file")
 		countMutex.Lock()
@@ -65,19 +67,38 @@ func Cleaner(config utils.ConfigData) []string {
 	if config.Clean {
 		cleaner.CleanDirectory(config)
 	}
-	files := []string{}
-	toDoFiles := utils.GetPaths(config.ApkDir, ".apk")
-	if config.Force {
-		files = toDoFiles
-	} else {
-		doneFiles := utils.GetPaths(config.OutputDir, ".json")
-		files = utils.CrossCompare(toDoFiles, doneFiles)
-	}
-	return files
+	return utils.GetPaths(config.ApkDir, ".apk")
 }
 
-func extract(path string, config utils.ConfigData) error {
+func getParsedJson(path string) (map[string]interface{}, error) {
+	if _, err := os.Stat(path); err == nil {
+		f, err := ioutil.ReadFile(path)
+		utils.Check(err)
+		var objs interface{}
+		json.Unmarshal(f, &objs)
+		features, ok := objs.(map[string]interface{})
+		if !ok {
+			return nil, fmt.Errorf("Warning: Could not unmarshal existing json file %v... Parsing all features", path)
+		}
+		return features, nil
+	} else {
+		return nil, err
+	}
+}
+
+func extractFeatures(path string, config utils.ConfigData) error {
 	jsonBuilder := make(map[string]interface{})
+	var err error
+	if config.Append {
+		jsonPath := config.OutputDir
+		_, newPath := filepath.Split(path)
+		jsonPath += "/" + newPath[:len(newPath)-4] + ".json"
+		jsonBuilder, err = getParsedJson(jsonPath)
+		if err != nil {
+			log.Println(err.Error())
+			jsonBuilder = make(map[string]interface{})
+		}
+	}
 	plugins := utils.GetPaths(config.CodeDir+"/plugins/", ".so")
 	for _, plug := range plugins {
 		p, err := plugin.Open(plug)
@@ -96,6 +117,10 @@ func extract(path string, config utils.ConfigData) error {
 			log.Fatal("Error: Malformed GetKey function in " + plug)
 		}
 		key := keyfunc()
+
+		if _, ok := jsonBuilder[key]; ok {
+			continue
+		}
 
 		v, err := p.Lookup("GetValue")
 		utils.Check(err)

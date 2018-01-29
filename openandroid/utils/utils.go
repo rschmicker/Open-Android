@@ -17,8 +17,8 @@ type ConfigData struct {
 	CodeDir    string `yaml:"codeDir"`
 	CacheDir   string `yaml:"cacheDir"`
 	Clean      bool
-	Force      bool
 	VtApiCheck bool
+	Append     bool
 	VtApiKey   string `yaml:"vtapikey"`
 }
 
