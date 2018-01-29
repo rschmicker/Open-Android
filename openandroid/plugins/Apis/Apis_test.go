@@ -30,5 +30,5 @@ func (s *ApiTestSuite) TestGetValue(c *C) {
 	c.Assert(err, IsNil)
 	apisInApk, ok := a.([]string)
 	c.Check(ok, Equals, true)
-	c.Check(len(apisInApk), Equals, 5007)
+	c.Check(len(apisInApk), Equals, 5003)
 }

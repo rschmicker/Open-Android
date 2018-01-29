@@ -30,5 +30,5 @@ func (s *StringsTestSuite) TestGetValue(c *C) {
 	c.Assert(err, IsNil)
 	StringssInApk, ok := a.([]string)
 	c.Check(ok, Equals, true)
-	c.Check(len(StringssInApk), Equals, 14967)
+	c.Check(len(StringssInApk), Equals, 14961)
 }

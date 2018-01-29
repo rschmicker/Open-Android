@@ -33,6 +33,6 @@ func GetValue(path string, config utils.ConfigData) (interface{}, error) {
 		log.Printf(errout.String())
 	}
 	data := strings.Split(out.String(), "\n")
-	data = append(data[5:], data[:5+1]...)
+	data = data[5:]
 	return data, nil
 }

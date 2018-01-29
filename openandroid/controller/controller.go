@@ -153,6 +153,8 @@ func WriteJSON(toWrite map[string]interface{}, OutputDir string) {
 		log.Fatal("Error: Count not validate Sha256 value as a string")
 	}
 	outputFile := OutputDir + "/" + Sha256 + ".json"
-	err = ioutil.WriteFile(outputFile, data, 0644)
+	fo, err := os.Create(outputFile)
 	utils.Check(err)
+	fo.Write(data)
+	fo.Close()
 }
