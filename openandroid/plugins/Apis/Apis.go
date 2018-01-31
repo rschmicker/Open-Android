@@ -6,6 +6,7 @@ import (
 	"log"
 	"os/exec"
 	"strings"
+	"unicode"
 )
 
 func NeedLock() bool { return true }
@@ -35,10 +36,13 @@ func GetValue(path string, config utils.ConfigData) (interface{}, error) {
 	data := strings.Split(out.String(), "\n")
 	data = data[5:]
 	for i := 0; i < len(data)-1; i++ {
-		tmp := data[i]
-		if len(tmp) > 8 {
-			data[i] = tmp[8:]
+		tmp := strings.Replace(data[i], "\t", "", -1)
+		for _, c := range tmp {
+			if unicode.IsDigit(c) {
+				tmp = tmp[1:]
+			}
 		}
+		data[i] = tmp
 	}
 	return data, nil
 }
