@@ -20,6 +20,7 @@ type ConfigData struct {
 	VtApiCheck bool
 	Append     bool
 	VtApiKey   string `yaml:"vtapikey"`
+	Parsers    []string
 }
 
 func ReadConfig(configPath string) ConfigData {

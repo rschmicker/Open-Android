@@ -82,11 +82,11 @@ func getParsedJson(path string) (map[string]interface{}, error) {
 		}
 		return features, nil
 	} else {
-		return nil, err
+		return nil, fmt.Errorf("Warning: Could not unmarshal existing json file %v... Parsing all features", path)
 	}
 }
 
-func extractFeatures(path string, config utils.ConfigData) error {
+func createJsonBuilder(path string, config utils.ConfigData) map[string]interface{} {
 	jsonBuilder := make(map[string]interface{})
 	var err error
 	if config.Append {
@@ -99,7 +99,34 @@ func extractFeatures(path string, config utils.ConfigData) error {
 			jsonBuilder = make(map[string]interface{})
 		}
 	}
-	plugins := utils.GetPaths(config.CodeDir+"/plugins/", ".so")
+	return jsonBuilder
+}
+
+func createPlugins(config utils.ConfigData) []string {
+	plugins := []string{}
+	if len(config.Parsers) == 0 {
+		plugins = utils.GetPaths(config.CodeDir+"/plugins/", ".so")
+	} else {
+		needSha256 := true
+		for _, parser := range config.Parsers {
+			needSha256 = !(parser == "Sha256")
+			path := config.CodeDir + "/plugins/" + parser + ".so"
+			if _, err := os.Stat(path); os.IsNotExist(err) {
+				log.Println("Warning: Could not find plugin specified " + path)
+			} else {
+				plugins = append(plugins, path)
+			}
+		}
+		if needSha256 {
+			plugins = append(plugins, config.CodeDir+"/plugins/Sha256.so")
+		}
+	}
+	return plugins
+}
+
+func extractFeatures(path string, config utils.ConfigData) error {
+	jsonBuilder := createJsonBuilder(path, config)
+	plugins := createPlugins(config)
 	for _, plug := range plugins {
 		p, err := plugin.Open(plug)
 		utils.Check(err)
