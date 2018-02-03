@@ -124,6 +124,17 @@ func createPlugins(config utils.ConfigData) []string {
 	return plugins
 }
 
+func inParsers(key string, config utils.ConfigData) bool {
+	status := false
+	for _, parser := range config.Parsers {
+		if parser == key {
+			status = true
+			break
+		}
+	}
+	return status
+}
+
 func extractFeatures(path string, config utils.ConfigData) error {
 	jsonBuilder := createJsonBuilder(path, config)
 	plugins := createPlugins(config)
@@ -145,7 +156,7 @@ func extractFeatures(path string, config utils.ConfigData) error {
 		}
 		key := keyfunc()
 
-		if _, ok := jsonBuilder[key]; ok {
+		if _, ok := jsonBuilder[key]; ok && !inParsers(key, config) {
 			continue
 		}
 
