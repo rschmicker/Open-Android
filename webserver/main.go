@@ -9,6 +9,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strings"
 )
 
 const InfoMsg string = `
@@ -75,6 +76,52 @@ func getSolrQuery(url string) string {
 	return string(body)
 }
 
+func ArffGenerator(w http.ResponseWriter, req *http.Request) {
+	w.Header().Add("Strict-Transport-Security", "max-age=63072000; includeSubDomains")
+	args := req.URL.Query()
+	q, err := getArg("q", args)
+	if err != nil {
+		log.Println("Warning: " + err.Error())
+		http.Error(w, InfoMsg, http.StatusBadRequest)
+		return
+	}
+	// migrate this to python file, call python file "plugin" and send back response
+	// Include date range
+	solrQuery := "http://localhost:8983/solr/apks/select?q=*:*&fl="
+	if q == "Permissions" {
+		solrQuery += "Malicious," + q
+	} else {
+		http.Error(w, InfoMsg, http.StatusBadRequest)
+		return
+	}
+	solrQuery += "&wt=csv"
+	data := getSolrQuery(solrQuery)
+	solrResponse := strings.Split(data, "\n")
+	io.WriteString(w, "@relation '" + q + "'\n")
+	permissions := io.ReadFile("./permissions.txt")
+	io.WriteString(w, "@attribute Malicious numeric")
+	for _, p := range permissions {
+		io.WriteString(w, "@attribute " + attr + " numeric\n")
+	}
+	io.WriteString(w, "@data\n")
+	for i := 1; i < len(solrResponse); i++ {
+		line := solrResponse[i]
+		entries := strings.Split(line, ",")
+		if entries[0] == "true" {
+			io.WriteString(w, "1,")
+		} else {
+			io.WriteString(w, "0,")
+		}
+		for _, sp := range entries[1:] {
+				for _, p := range permissions {
+					if sp == p {
+						
+					}
+				}
+		}
+	}
+}
+
 func Query(w http.ResponseWriter, req *http.Request) {
 	w.Header().Add("Strict-Transport-Security", "max-age=63072000; includeSubDomains")
 	args := req.URL.Query()
@@ -128,6 +175,7 @@ func main() {
 	}
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", Query)
+	mux.HandleFunc("/arff", ArffGenerator)
 	cfg := &tls.Config{
 		MinVersion:               tls.VersionTLS12,
 		CurvePreferences:         []tls.CurveID{tls.CurveP521, tls.CurveP384, tls.CurveP256},
