@@ -5,15 +5,15 @@ import(
 	"net/http"
 	"golang.org/x/net/context"
 	"golang.org/x/sync/errgroup"
-	//"gopkg.in/cheggaaa/pb.v1"
 	"encoding/json"
 	"io"
 	"bytes"
+	//"log"
 )
 
 type ApkData struct {
 	Permissions		[]string	`json:"Permissions"`
-	Malicious		string		`json:"Permissions"`
+	Malicious		string		`json:"Malicious"`
 }
 
 func Query(w http.ResponseWriter, req *http.Request) {
@@ -76,11 +76,13 @@ func Query(w http.ResponseWriter, req *http.Request) {
 	// 2nd goroutine receives hits and deserializes them.
 	//
 	// If you want, setup a number of goroutines handling deserialization in parallel.
+	apks := make(chan json.RawMessage)
 	for i := 0; i < 10; i++ {
 		g.Go(func() error {
 			for hit := range hits {
-				r := bytes.NewReader(hit)
-				io.Copy(w, r)
+				//r := bytes.NewReader(hit)
+				apks <- hit
+				//io.Copy(w, r)
 				// // Deserialize
 				// var a ApkData
 				// err := json.Unmarshal(hit, &a)
@@ -104,6 +106,24 @@ func Query(w http.ResponseWriter, req *http.Request) {
 			return nil
 		})
 	}
+
+	g.Go(func() error {
+		for a := range apks {
+			data := &ApkData{}
+			err := json.Unmarshal(a, &data)
+			if err != nil {
+				panic(err)
+			}
+			writer := []byte{}
+			writer, err = json.Marshal(data)
+			if err != nil {
+				panic(err)
+			}
+			r := bytes.NewReader(writer)
+			io.Copy(w, r)
+		}
+		return nil
+	})
 
 	// Check whether any goroutines failed.
 	if err := g.Wait(); err != nil {
