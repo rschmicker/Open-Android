@@ -12,19 +12,17 @@ from sklearn import linear_model
 from sklearn.naive_bayes import GaussianNB
 from sklearn.cluster import KMeans
 
+# dl: 50 minutes for perms, filesize, and malicious for 94,000 apks, 12.9KB/s
 def get_apk_json(filepath):
-	json_files = [f for f in listdir(filepath) if isfile(join(filepath, f))]
-	data = []
-	for f in json_files:
-		with open(filepath + f) as json_data:
-			d = json.load(json_data)
-			data.append(d)
-	return data
+	d = {}
+	with open(filepath) as json_data:
+		d = json.load(json_data)
+	return d
 
 def get_permissions(apk):
 	perms = []
 	for permission in PERMISSIONS:
-		status = 1 if permission in apk['Permissions'] else 0
+		status = 1 if permission in apk['permissions'] else 0
 		perms.append(status)
 	return perms
 
@@ -33,24 +31,28 @@ def main():
 	#model = svm.SVC()
 	#model = GaussianNB()
 	#model = KMeans(n_clusters = 10)
-	filepath = "../data/output/"
-	apks = get_apk_json(filepath)
+	apks = get_apk_json("permsfilesize.json")
 	feature_vector = []
 	target_vector = []
-	for apk in apks:
+	apks = apks['data']
+	train_apks = apks[:len(apks)-10000]
+	predict_apks = apks[len(apks)-10000:]
+	for apk in train_apks:
 		feature_vector.append(get_permissions(apk))
 		target_type = 1 if apk['Malicious'] == 'true' else 0
 		target_vector.append(target_type)
 	clf = model
 	clf.fit(feature_vector, target_vector)
 
-	test_data = get_apk_json("../data/test/")[0]
-	test_feature_vector = get_permissions(test_data)
-	result = clf.predict([test_feature_vector])
-	if result == 1:
-		print("test data found to be malware")
-	else:
-		print("test data found to be benign")
-
+	total_test = len(predict_apks)
+	number_correct = 0
+	for apk in predict_apks:
+			test_feature_vector = get_permissions(apk)
+			result = clf.predict([test_feature_vector])
+			mal_status = 1 if apk['Malicious'] == 'true' else 0
+			if result == mal_status:
+					number_correct += 1
+	percent = (float(number_correct)/float(total_test))*float(100)
+	print("Accuracy: " + str(percent) + "%")
 
 main()
