@@ -51,17 +51,21 @@ func Query(w http.ResponseWriter, req *http.Request) {
 
 	scroll := client.Scroll("apks").Type("apk").Query(rangeQuery).Size(100)
 	io.WriteString(w, "{\"data\":[")
+	first := true
 	for {
 		results, err := scroll.Do(ctx)
 		if err == io.EOF {
 			break// all results retrieved
+		} else if !first {
+			io.WriteString(w, ",")
 		}
+		first = false
 		if err != nil {
 			log.Println(err.Error())
 			break
 		}
 			// Send the hits to the hits channel
-		for _, hit := range results.Hits.Hits {
+		for _, hit := range results.Hits.Hits[:len(results.Hits.Hits)-1] {
 			if len(fields) == 0 {
 				w.Write(*hit.Source)
 				io.WriteString(w, ",")
@@ -86,6 +90,23 @@ func Query(w http.ResponseWriter, req *http.Request) {
                         w.Write(writer)
 			io.WriteString(w, ",")
 		}
+		data := make(map[string]interface{})
+                out := make(map[string]interface{})
+		err = json.Unmarshal(*results.Hits.Hits[len(results.Hits.Hits)-1].Source, &data)
+                if err != nil {
+			panic(err)
+                }
+		for key, val := range data {
+			if utils.StringInSlice(key, fields) {
+				out[key] = val
+			}
+		}
+		writer := []byte{}
+                writer, err = json.Marshal(out)
+                if err != nil {
+			panic(err)
+                }
+                w.Write(writer)
 	}
 	io.WriteString(w, "]}")
 
