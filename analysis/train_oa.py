@@ -44,7 +44,7 @@ def main():
 	target_vector = []
 	apks = apks['data']
 
-	for model_name, model in models:
+	for model_name, model in models.iteritems():
 		kf = KFold(10, True, None)
 		kf.get_n_splits(apks)
 		train_apks = []
