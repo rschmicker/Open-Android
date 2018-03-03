@@ -10,33 +10,22 @@ No GET parameters found!
 
 Here's some brief info on how to query:
 
-q=
-     - Query search parameter (Required)
-     - If you'd like to download everything, use q=*:*
-     - Search using regex or for a particular text with q=<field name>:<regex or literal>
-     - Example: q=Malicious:true
-        - Returns all APKs that are malicious
-
-fl=
+fields=
      - Return only these fields
-     - Example: fl=Permissions+Apis+PackageName
+     - Example: fields=permissions,Apis,PackageName,Malicious
         - Returns only the fields Permissions, Apis, and PackageName
 
-omitHeader=
-     - Remove extra query info
-     - Example: omitHeader=true
+to=
+     - Only return features up to this timestamp
+     - Example: to=2018-02-01T10:00:00
+	- Returns features parsed up to February 1, 2018 at 10AM UTC
 
-rows=
-     - Number of entries to return
-     - Example: rows=7000
-         - Returns top 7000 entries of given query
+from=
+     - Only return features starting from this timestamp forward
+     - Example: to=2018-02-01T10:00:00
+	- Returns features parsed starting from February 1, 2018 at 10AM UTC
 
-wt=
-     - Writer Type
-     - Type of file that is returned from the query
-     - json, csv, xml, etc.
-     - Default of json
-     - Example: wt=json
+To query for everything in the data set: https://64.251.61.74/all
 
 More detailed descriptions and examples can be seen on our wiki: https://github.com/rschmicker/Open-Android/wiki
 
