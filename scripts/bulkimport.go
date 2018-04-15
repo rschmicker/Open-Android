@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sort"
 )
 
 type ApkData struct {
@@ -44,6 +45,16 @@ func GetPaths(dir string, Containing string) []string {
 	return fileList
 }
 
+type Alphabetic []string
+
+func (list Alphabetic) Len() int { return len(list) }
+
+func (list Alphabetic) Swap(i, j int) { list[i], list[j] = list[j], list[i] }
+
+func (list Alphabetic) Less(i, j int) bool {
+    return list[i] < list[j]
+}
+
 func main() {
 	ctx := context.Background()
 	client, err := elastic.NewClient()
@@ -51,7 +62,8 @@ func main() {
 		log.Fatal(err)
 	}
 	jsonData := GetPaths("/iscsi/output/", ".json")
-	jsonData = jsonData[:2000]
+	sort.Sort(Alphabetic(jsonData))
+	jsonData = jsonData[:250]
 	for i, file := range jsonData {
 		data, err := ioutil.ReadFile(file)
 		if err != nil {
@@ -67,6 +79,7 @@ func main() {
 		if err != nil {
 			log.Fatal(err)
 		}
+		log.Println(i)
 	}
 	_, err = client.Flush().Index("apks").Do(ctx)
 	if err != nil {

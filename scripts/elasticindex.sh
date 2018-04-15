@@ -51,3 +51,4 @@ curl -X PUT "http://localhost:9200/apks/_mapping/_doc" -H 'Content-Type: applica
 }
 '
 go run bulkimport.go
+time go run query_elastic.go
