@@ -4,10 +4,15 @@ import (
 	"crypto/tls"
 	"flag"
 	"log"
+	"io"
 	"net/http"
 	"github.com/Open-Android/webserver/utils"
 	"github.com/Open-Android/webserver/api"
 )
+
+func HowToQuery(w http.ResponseWriter, req *http.Request) {
+	io.WriteString(w, utils.InfoMsg)
+}
 
 func main() {
 	keyFlag := flag.String("key", "", "Location to HTTPS key.")
@@ -17,7 +22,9 @@ func main() {
 		utils.PrintUsage()
 	}
 	mux := http.NewServeMux()
-	mux.HandleFunc("/", api.Query)
+	mux.HandleFunc("/", HowToQuery)
+	mux.HandleFunc("/api", api.Query)
+	mux.HandleFunc("/all", api.All)
 	cfg := &tls.Config{
 		MinVersion:               tls.VersionTLS12,
 		CurvePreferences:         []tls.CurveID{tls.CurveP521, tls.CurveP384, tls.CurveP256},

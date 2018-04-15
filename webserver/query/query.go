@@ -21,7 +21,7 @@ func StringInSlice(a string, list []string) bool {
     return false
 }
 
-func Query(filename string, toArg string, fromArg string, flds string) {
+func Query(filename string, fromArg string, toArg string, flds string) {
 	client, err := elastic.NewClient()
         if err != nil {
                 panic(err)
