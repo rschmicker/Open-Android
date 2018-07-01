@@ -84,7 +84,7 @@ func GetValue(path string, config utils.ConfigData) (interface{}, error) {
 				return fallbackMalicious(path), err
 			}
 		} else {
-			if rr.Positives > 0 {
+			if rr.Positives > 4 {
 				malicious = "true"
 			} else {
 				malicious = "false"
